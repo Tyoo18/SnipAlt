@@ -14,6 +14,14 @@
     border-radius 0.15s ease;
 }
 
+.content-box::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome/Safari */
+}
+.content-box {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
 /* [STYLE]: Mid-air floating structure layout settings */
 .is-floating {
   border: 1px solid rgba(255, 255, 255, 0.1) !important;

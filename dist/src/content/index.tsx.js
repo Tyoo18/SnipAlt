@@ -23,7 +23,7 @@ const ContentApp = () => {
   _s();
   const [tempClips, setTempClips] = useState([]);
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const [side, setSide] = useState("right");
   const [isSnapped, setIsSnapped] = useState(true);
   const windowRef = useRef(null);
@@ -44,6 +44,17 @@ const ContentApp = () => {
   isCollapsedRef.current = isCollapsed;
   isSnappedRef.current = isSnapped;
   const currentWidthWidth = isCollapsed ? 48 : 288;
+  const passToBackgroundStorageBridge = (text) => {
+    chrome.runtime.sendMessage({
+      type: "SAVE_CLIP",
+      payload: {
+        textContent: text,
+        sourceUrl: window.location.href,
+        pageTitle: document.title,
+        timestamp: Date.now()
+      }
+    });
+  };
   const scheduleAutoCollapse = (delayTime) => {
     if (timerRef.current) window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => {
@@ -78,11 +89,13 @@ const ContentApp = () => {
         e.preventDefault();
         const constructedPayload = {
           id: Math.random().toString(36).substring(2, 9),
-          text: highlightedSelection
+          text: highlightedSelection,
+          timestamp: Date.now()
         };
-        setTempClips((prev) => [...prev, constructedPayload]);
+        setTempClips((prev) => [constructedPayload, ...prev]);
         setIsVisible(true);
         handleExpansionToggle(false);
+        passToBackgroundStorageBridge(highlightedSelection);
       }
     };
     window.addEventListener("keydown", processLocalShortcutKeys);
@@ -93,22 +106,13 @@ const ContentApp = () => {
       if (message.type === "SNIPPET_CAPTURED" && message.payload?.text) {
         const structuralPayload = {
           id: Math.random().toString(36).substring(2, 9),
-          text: message.payload.text
+          text: message.payload.text,
+          timestamp: Date.now()
         };
-        setTempClips((prev) => [...prev, structuralPayload]);
+        setTempClips((prev) => [structuralPayload, ...prev]);
         setIsVisible(true);
         handleExpansionToggle(false);
       } else if (message.type === "TOGGLE_DOCK") {
-        if (tempClips.length === 0) {
-          setTempClips(
-            [
-              {
-                id: "placeholder",
-                text: "Highlight text on any website and press Alt+S to clip insights!"
-              }
-            ]
-          );
-        }
         setIsVisible((prev) => !prev);
         handleExpansionToggle(false);
       }
@@ -202,7 +206,7 @@ const ContentApp = () => {
   const routeSidepanelActivation = () => {
     chrome.runtime.sendMessage({ type: "OPEN_SIDEPANEL" });
   };
-  if (!isVisible || tempClips.length === 0) return null;
+  if (!isVisible) return null;
   return /* @__PURE__ */ jsxDEV(
     "div",
     {
@@ -212,144 +216,138 @@ const ContentApp = () => {
         width: `${currentWidthWidth}px`,
         transform: `translate3d(${dragPhysics.current.currentX}px, ${dragPhysics.current.currentY}px, 0)`
       },
-      className: `fixed top-0 left-0 z-[2147483647] select-none font-sans text-slate-200 cursor-grab active:cursor-grabbing snipalt-window-container ${isSnapped ? "is-snapped" : "is-floating"} ${side === "right" ? "side-right" : "side-left"} ${isCollapsed ? "is-collapsed h-44" : "is-expanded h-72"}`,
-      children: isCollapsed ? (
-        /* ========================================================
-           COMPACT VIEW WORKBENCH NODE (TRUE PITCH BLACK)
-           ======================================================== */
-        /* @__PURE__ */ jsxDEV(
-          "div",
-          {
-            onClick: () => handleExpansionToggle(false),
-            onMouseEnter: () => handleExpansionToggle(false),
-            className: `w-full h-full flex flex-col items-center justify-center transition-colors hover:bg-zinc-950/40 ${side === "right" ? "rounded-l-2xl" : "rounded-r-2xl"}`,
-            children: /* @__PURE__ */ jsxDEV("div", { className: "w-7 h-[148px] border border-white/5 rounded-xl flex flex-col items-center justify-center bg-zinc-900/40", children: [
-              /* @__PURE__ */ jsxDEV(Layers, { size: 13, className: "text-blue-400 animate-pulse" }, void 0, false, {
-                fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-                lineNumber: 309,
-                columnNumber: 13
-              }, this),
-              /* @__PURE__ */ jsxDEV("span", { className: "text-[10px] font-black text-white mt-1.5 tracking-tighter", children: tempClips.length }, void 0, false, {
-                fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-                lineNumber: 310,
-                columnNumber: 13
-              }, this)
-            ] }, void 0, true, {
+      className: `fixed top-0 left-0 z-[2147483647] select-none text-slate-200 cursor-grab active:cursor-grabbing snipalt-window-container ${isSnapped ? "is-snapped" : "is-floating"} ${side === "right" ? "side-right" : "side-left"} ${isCollapsed ? "is-collapsed h-44" : "is-expanded h-72"}`,
+      children: isCollapsed ? /* @__PURE__ */ jsxDEV(
+        "div",
+        {
+          onClick: () => handleExpansionToggle(false),
+          onMouseEnter: () => handleExpansionToggle(false),
+          className: `w-full h-full flex flex-col items-center justify-center transition-colors hover:bg-zinc-950/40 ${side === "right" ? "rounded-l-2xl" : "rounded-r-2xl"}`,
+          children: /* @__PURE__ */ jsxDEV("div", { className: "w-7 h-[148px] border border-white/5 rounded-xl flex flex-col items-center justify-center bg-zinc-900/40", children: [
+            /* @__PURE__ */ jsxDEV(Layers, { size: 13, className: "text-blue-400 animate-pulse" }, void 0, false, {
               fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-              lineNumber: 308,
-              columnNumber: 11
-            }, this)
-          },
-          void 0,
-          false,
-          {
-            fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-            lineNumber: 301,
-            columnNumber: 7
-          },
-          this
-        )
-      ) : (
-        /* ========================================================
-           EXPANDED VIEW PANEL SCREEN INTERFACE 
-           ======================================================== */
-        /* @__PURE__ */ jsxDEV("div", { className: "w-full h-full flex flex-col p-3 box-border", children: [
-          /* @__PURE__ */ jsxDEV("div", { className: "flex items-center justify-between mb-2.5 overflow-visible", children: [
-            /* @__PURE__ */ jsxDEV("div", { className: "flex items-center gap-1.5 pl-0.5 pointer-events-none", children: [
-              /* @__PURE__ */ jsxDEV(Layers, { size: 12, className: "text-blue-400" }, void 0, false, {
-                fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-                lineNumber: 323,
-                columnNumber: 15
-              }, this),
-              /* @__PURE__ */ jsxDEV("span", { className: "text-[10px] font-bold uppercase tracking-wider text-zinc-400", children: "SnipAlt Workbench" }, void 0, false, {
-                fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-                lineNumber: 324,
-                columnNumber: 15
-              }, this)
-            ] }, void 0, true, {
-              fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-              lineNumber: 322,
+              lineNumber: 300,
               columnNumber: 13
             }, this),
-            /* @__PURE__ */ jsxDEV("div", { className: "snipalt-tooltip-trigger", children: [
-              /* @__PURE__ */ jsxDEV(
-                "button",
-                {
-                  onClick: routeSidepanelActivation,
-                  className: "p-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-md border border-white/10 flex items-center justify-center shadow-sm transition-all",
-                  children: /* @__PURE__ */ jsxDEV(SidebarOpen, { size: 13 }, void 0, false, {
-                    fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-                    lineNumber: 335,
-                    columnNumber: 17
-                  }, this)
-                },
-                void 0,
-                false,
-                {
-                  fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-                  lineNumber: 331,
-                  columnNumber: 15
-                },
-                this
-              ),
-              /* @__PURE__ */ jsxDEV("div", { className: "snipalt-tooltip-card", children: "Open Permanent Vault Sidepanel" }, void 0, false, {
-                fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-                lineNumber: 337,
-                columnNumber: 15
-              }, this)
-            ] }, void 0, true, {
+            /* @__PURE__ */ jsxDEV("span", { className: "text-[10px] font-black text-white mt-1.5 tracking-tighter", children: tempClips.length }, void 0, false, {
               fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-              lineNumber: 330,
+              lineNumber: 301,
               columnNumber: 13
             }, this)
           ] }, void 0, true, {
             fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-            lineNumber: 321,
+            lineNumber: 299,
             columnNumber: 11
+          }, this)
+        },
+        void 0,
+        false,
+        {
+          fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+          lineNumber: 292,
+          columnNumber: 7
+        },
+        this
+      ) : /* @__PURE__ */ jsxDEV("div", { className: "w-full h-full flex flex-col p-3 box-border", children: [
+        /* @__PURE__ */ jsxDEV("div", { className: "flex items-center justify-between mb-2.5 overflow-visible", children: [
+          /* @__PURE__ */ jsxDEV("div", { className: "flex items-center gap-1.5 pl-0.5 pointer-events-none", children: [
+            /* @__PURE__ */ jsxDEV(Layers, { size: 12, className: "text-blue-400" }, void 0, false, {
+              fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+              lineNumber: 310,
+              columnNumber: 15
+            }, this),
+            /* @__PURE__ */ jsxDEV("span", { className: "text-[10px] font-bold uppercase tracking-wider text-zinc-400", children: "SnipAlt Workbench" }, void 0, false, {
+              fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+              lineNumber: 311,
+              columnNumber: 15
+            }, this)
+          ] }, void 0, true, {
+            fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+            lineNumber: 309,
+            columnNumber: 13
           }, this),
-          /* @__PURE__ */ jsxDEV("div", { className: "content-box flex-1 border border-white/5 rounded-xl bg-zinc-950/90 overflow-y-auto p-2.5 space-y-2 select-text cursor-auto", children: tempClips.map(
-            (clipItem) => /* @__PURE__ */ jsxDEV(
-              "div",
+          /* @__PURE__ */ jsxDEV("div", { className: "snipalt-tooltip-trigger", children: [
+            /* @__PURE__ */ jsxDEV(
+              "button",
               {
-                className: "bg-zinc-900/40 border border-white/5 p-2 rounded-lg text-[11px] text-zinc-300 leading-relaxed select-text",
-                children: [
-                  '"',
-                  clipItem.text,
-                  '"'
-                ]
+                onClick: routeSidepanelActivation,
+                className: "p-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-md border border-white/10 flex items-center justify-center shadow-sm transition-all",
+                children: /* @__PURE__ */ jsxDEV(SidebarOpen, { size: 13 }, void 0, false, {
+                  fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+                  lineNumber: 321,
+                  columnNumber: 17
+                }, this)
               },
-              clipItem.id,
-              true,
+              void 0,
+              false,
               {
                 fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-                lineNumber: 346,
-                columnNumber: 11
+                lineNumber: 317,
+                columnNumber: 15
               },
               this
-            )
-          ) }, void 0, false, {
+            ),
+            /* @__PURE__ */ jsxDEV("div", { className: "snipalt-tooltip-card", children: "Open Permanent Vault Sidepanel" }, void 0, false, {
+              fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+              lineNumber: 323,
+              columnNumber: 15
+            }, this)
+          ] }, void 0, true, {
             fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-            lineNumber: 344,
-            columnNumber: 11
+            lineNumber: 316,
+            columnNumber: 13
           }, this)
         ] }, void 0, true, {
           fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-          lineNumber: 319,
-          columnNumber: 7
+          lineNumber: 308,
+          columnNumber: 11
+        }, this),
+        /* @__PURE__ */ jsxDEV("div", { className: "content-box flex-1 border border-white/5 rounded-xl bg-zinc-950/90 overflow-y-auto p-2.5 space-y-2 select-text cursor-auto", children: tempClips.length === 0 ? /* @__PURE__ */ jsxDEV("div", { className: "text-[10px] text-zinc-500 text-center pt-8 italic", children: "No active clips in this session." }, void 0, false, {
+          fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+          lineNumber: 331,
+          columnNumber: 11
+        }, this) : tempClips.map(
+          (clipItem) => /* @__PURE__ */ jsxDEV(
+            "div",
+            {
+              className: "bg-zinc-900/40 border border-white/5 p-2 rounded-lg text-[11px] text-zinc-300 leading-relaxed select-text",
+              children: [
+                '"',
+                clipItem.text,
+                '"'
+              ]
+            },
+            clipItem.id,
+            true,
+            {
+              fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+              lineNumber: 336,
+              columnNumber: 11
+            },
+            this
+          )
+        ) }, void 0, false, {
+          fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+          lineNumber: 329,
+          columnNumber: 11
         }, this)
-      )
+      ] }, void 0, true, {
+        fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+        lineNumber: 307,
+        columnNumber: 7
+      }, this)
     },
     void 0,
     false,
     {
       fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-      lineNumber: 284,
+      lineNumber: 278,
       columnNumber: 5
     },
     this
   );
 };
-_s(ContentApp, "z5NgtIV31qix6WVPTJpOUkb2DWM=");
+_s(ContentApp, "BHTYtYV0YLHryUHj93pukPvIzMo=");
 _c = ContentApp;
 const initSnipAltDock = () => {
   if (document.getElementById("snipalt-root")) return;
@@ -369,11 +367,11 @@ const initSnipAltDock = () => {
   ReactDOM.createRoot(appContainerMount).render(
     /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(ContentApp, {}, void 0, false, {
       fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-      lineNumber: 386,
+      lineNumber: 373,
       columnNumber: 7
     }, this) }, void 0, false, {
       fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-      lineNumber: 385,
+      lineNumber: 372,
       columnNumber: 5
     }, this)
   );

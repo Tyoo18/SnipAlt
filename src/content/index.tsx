@@ -4,25 +4,23 @@ import ReactDOM from "react-dom/client";
 import { Layers, SidebarOpen } from "lucide-react";
 import styleText from "./style.css?inline";
 
-// [INIT]: Define interface schemas for captured text clips
 interface TemporaryClip {
   id: string;
   text: string;
+  timestamp: number;
 }
 
 const ContentApp = () => {
   // [STATE]: Structural state definitions designed for structural view toggles
   const [tempClips, setTempClips] = useState<TemporaryClip[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const [side, setSide] = useState<"left" | "right">("right");
   const [isSnapped, setIsSnapped] = useState(true);
 
-  // [INIT]: Component DOM and scheduling reference nodes configuration
   const windowRef = useRef<HTMLDivElement | null>(null);
   const timerRef = useRef<number | null>(null);
 
-  // High fidelity interaction physics memory bypass registry
   const dragPhysics = useRef({
     isDragging: false,
     startX: 0,
@@ -37,14 +35,25 @@ const ContentApp = () => {
   const isCollapsedRef = useRef(isCollapsed);
   const isSnappedRef = useRef(isSnapped);
 
-  // Keep references synced directly to eliminate async state stale reads
   sideRef.current = side;
   isCollapsedRef.current = isCollapsed;
   isSnappedRef.current = isSnapped;
 
   const currentWidthWidth = isCollapsed ? 48 : 288;
 
-  // [HANDLER]: Global duration auto-collapse orchestration routine
+  // [UTIL]: Relay content text directly to Background threads to write to extension's Dexie Database
+  const passToBackgroundStorageBridge = (text: string) => {
+    chrome.runtime.sendMessage({
+      type: "SAVE_CLIP",
+      payload: {
+        textContent: text,
+        sourceUrl: window.location.href,
+        pageTitle: document.title,
+        timestamp: Date.now(),
+      },
+    });
+  };
+
   const scheduleAutoCollapse = (delayTime: number) => {
     if (timerRef.current) window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => {
@@ -52,26 +61,21 @@ const ContentApp = () => {
     }, delayTime);
   };
 
-  // [HANDLER]: Hardware-accelerated position frame flush pipeline
   const updateWindowTransformStyles = () => {
     if (!windowRef.current) return;
     windowRef.current.style.transform = `translate3d(${dragPhysics.current.currentX}px, ${dragPhysics.current.currentY}px, 0)`;
   };
 
-  // [HANDLER]: High-performance adaptive layout dimension toggle sync engine
   const handleExpansionToggle = (targetCollapseState: boolean) => {
     if (timerRef.current) window.clearTimeout(timerRef.current);
 
-    // [CALC]: Recalculate horizontal vector arrays matching expansion source directions
     if (isSnappedRef.current && sideRef.current === "right") {
       const startingWidth = isCollapsedRef.current ? 48 : 288;
       const endingWidth = targetCollapseState ? 48 : 288;
       const adaptiveDeltaDiff = endingWidth - startingWidth;
-
-      // Shift leftwards when expanding from right side edge to preserve look bounds
       dragPhysics.current.currentX -= adaptiveDeltaDiff;
     } else if (isSnappedRef.current && sideRef.current === "left") {
-      dragPhysics.current.currentX = 0; // Lock perfectly flush down to zero pixels margin
+      dragPhysics.current.currentX = 0;
     }
 
     setIsCollapsed(targetCollapseState);
@@ -82,7 +86,7 @@ const ContentApp = () => {
     }
   };
 
-  // [HANDLER]: Core Engine Shortcut listener processing Alt+S text inputs
+  // [HANDLER]: Hardware-accelerated processing engine listening to Alt+S hotkeys
   useEffect(() => {
     const processLocalShortcutKeys = (e: KeyboardEvent) => {
       if (e.altKey && (e.key === "s" || e.key === "S")) {
@@ -93,11 +97,13 @@ const ContentApp = () => {
         const constructedPayload: TemporaryClip = {
           id: Math.random().toString(36).substring(2, 9),
           text: highlightedSelection,
+          timestamp: Date.now(),
         };
 
-        setTempClips((prev) => [...prev, constructedPayload]);
+        setTempClips((prev) => [constructedPayload, ...prev]);
         setIsVisible(true);
         handleExpansionToggle(false);
+        passToBackgroundStorageBridge(highlightedSelection);
       }
     };
     window.addEventListener("keydown", processLocalShortcutKeys);
@@ -105,26 +111,19 @@ const ContentApp = () => {
       window.removeEventListener("keydown", processLocalShortcutKeys);
   }, []);
 
-  // [HANDLER]: Handle runtime message delivery originating from Background processes
+  // [HANDLER]: Receive reactive feedback downstream from Background interactions
   useEffect(() => {
     const processInboundMessageStreams = (message: any) => {
       if (message.type === "SNIPPET_CAPTURED" && message.payload?.text) {
         const structuralPayload: TemporaryClip = {
           id: Math.random().toString(36).substring(2, 9),
           text: message.payload.text,
+          timestamp: Date.now(),
         };
-        setTempClips((prev) => [...prev, structuralPayload]);
+        setTempClips((prev) => [structuralPayload, ...prev]);
         setIsVisible(true);
         handleExpansionToggle(false);
       } else if (message.type === "TOGGLE_DOCK") {
-        if (tempClips.length === 0) {
-          setTempClips([
-            {
-              id: "placeholder",
-              text: "Highlight text on any website and press Alt+S to clip insights!",
-            },
-          ]);
-        }
         setIsVisible((prev) => !prev);
         handleExpansionToggle(false);
       }
@@ -135,7 +134,6 @@ const ContentApp = () => {
       chrome.runtime.onMessage.removeListener(processInboundMessageStreams);
   }, [tempClips]);
 
-  // [HANDLER]: Outside viewport click listener designed to auto-collapse workbench
   useEffect(() => {
     const monitorOutsideClickLayouts = (e: MouseEvent) => {
       const rootHostContainer = document.getElementById("snipalt-root");
@@ -152,7 +150,6 @@ const ContentApp = () => {
       window.removeEventListener("click", monitorOutsideClickLayouts);
   }, []);
 
-  // [HANDLER]: Responsive browser window adjustments pipeline lock
   useEffect(() => {
     const handleScreenResizeAdjustment = () => {
       const horizontalLimitWidth = isCollapsedRef.current ? 48 : 288;
@@ -169,7 +166,6 @@ const ContentApp = () => {
       window.removeEventListener("resize", handleScreenResizeAdjustment);
   }, []);
 
-  // [HANDLER]: Multi-device hardware pointer capture sequence triggers
   const handlePointerDownEngine = (e: React.PointerEvent) => {
     if (
       (e.target as HTMLElement).closest("button") ||
@@ -177,7 +173,6 @@ const ContentApp = () => {
     ) {
       return;
     }
-
     if (timerRef.current) window.clearTimeout(timerRef.current);
 
     dragPhysics.current.isDragging = true;
@@ -239,12 +234,11 @@ const ContentApp = () => {
 
     if (terminalReleasePointX < screenHorizontalMidpoint) {
       computedFinalTargetSide = "left";
-      automatedSnapLockCoordinateX = 0; // Absolute 0px gap lock
+      automatedSnapLockCoordinateX = 0;
     }
 
     setSide(computedFinalTargetSide);
     setIsSnapped(true);
-
     dragPhysics.current.currentX = automatedSnapLockCoordinateX;
 
     requestAnimationFrame(() => {
@@ -259,7 +253,7 @@ const ContentApp = () => {
     chrome.runtime.sendMessage({ type: "OPEN_SIDEPANEL" });
   };
 
-  if (!isVisible || tempClips.length === 0) return null;
+  if (!isVisible) return null;
 
   return (
     <div
@@ -269,16 +263,13 @@ const ContentApp = () => {
         width: `${currentWidthWidth}px`,
         transform: `translate3d(${dragPhysics.current.currentX}px, ${dragPhysics.current.currentY}px, 0)`,
       }}
-      className={`fixed top-0 left-0 z-[2147483647] select-none font-sans text-slate-200 cursor-grab active:cursor-grabbing snipalt-window-container ${
+      className={`fixed top-0 left-0 z-[2147483647] select-none text-slate-200 cursor-grab active:cursor-grabbing snipalt-window-container ${
         isSnapped ? "is-snapped" : "is-floating"
       } ${side === "right" ? "side-right" : "side-left"} ${
         isCollapsed ? "is-collapsed h-44" : "is-expanded h-72"
       }`}
     >
       {isCollapsed ? (
-        /* ========================================================
-           COMPACT VIEW WORKBENCH NODE (TRUE PITCH BLACK)
-           ======================================================== */
         <div
           onClick={() => handleExpansionToggle(false)}
           onMouseEnter={() => handleExpansionToggle(false)}
@@ -294,11 +285,7 @@ const ContentApp = () => {
           </div>
         </div>
       ) : (
-        /* ========================================================
-           EXPANDED VIEW PANEL SCREEN INTERFACE 
-           ======================================================== */
         <div className="w-full h-full flex flex-col p-3 box-border">
-          {/* HEADER HEADER CAPTURE CONTROLS ROW */}
           <div className="flex items-center justify-between mb-2.5 overflow-visible">
             <div className="flex items-center gap-1.5 pl-0.5 pointer-events-none">
               <Layers size={12} className="text-blue-400" />
@@ -307,7 +294,6 @@ const ContentApp = () => {
               </span>
             </div>
 
-            {/* NAKED ICON ONLY BUTTON + PREMIUM TOOLTIP */}
             <div className="snipalt-tooltip-trigger">
               <button
                 onClick={routeSidepanelActivation}
@@ -321,16 +307,21 @@ const ContentApp = () => {
             </div>
           </div>
 
-          {/* ACTIVE CONTENT SELECTION SCROLL BOX */}
           <div className="content-box flex-1 border border-white/5 rounded-xl bg-zinc-950/90 overflow-y-auto p-2.5 space-y-2 select-text cursor-auto">
-            {tempClips.map((clipItem) => (
-              <div
-                key={clipItem.id}
-                className="bg-zinc-900/40 border border-white/5 p-2 rounded-lg text-[11px] text-zinc-300 leading-relaxed select-text"
-              >
-                "{clipItem.text}"
+            {tempClips.length === 0 ? (
+              <div className="text-[10px] text-zinc-500 text-center pt-8 italic">
+                No active clips in this session.
               </div>
-            ))}
+            ) : (
+              tempClips.map((clipItem) => (
+                <div
+                  key={clipItem.id}
+                  className="bg-zinc-900/40 border border-white/5 p-2 rounded-lg text-[11px] text-zinc-300 leading-relaxed select-text"
+                >
+                  "{clipItem.text}"
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
@@ -338,15 +329,12 @@ const ContentApp = () => {
   );
 };
 
-// [INIT]: Safe DOM Mounting Entrypoint with defensive checks to prevent null body crashes
 const initSnipAltDock = () => {
-  // Prevent duplicate injection if hot reload triggers multiple times
   if (document.getElementById("snipalt-root")) return;
 
   const nativeHostNode = document.createElement("div");
   nativeHostNode.id = "snipalt-root";
 
-  // Defensive fallback: if body is not ready, append to documentElement safely
   if (!document.body) {
     document.documentElement.appendChild(nativeHostNode);
   } else {
@@ -361,7 +349,6 @@ const initSnipAltDock = () => {
   runtimeEmbeddedStyle.textContent = styleText;
   virtualShadowRoot.appendChild(runtimeEmbeddedStyle);
 
-  // [RENDER]: Mount full architecture engines safely inside verified virtual roots
   ReactDOM.createRoot(appContainerMount).render(
     <React.StrictMode>
       <ContentApp />
@@ -369,7 +356,6 @@ const initSnipAltDock = () => {
   );
 };
 
-// [UTIL]: Orchestrate loading states to survive early execution phases
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initSnipAltDock);
 } else {
