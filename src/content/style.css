@@ -11,7 +11,13 @@
   transition:
     width 0.2s cubic-bezier(0.16, 1, 0.3, 1),
     height 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-    border-radius 0.15s ease;
+    border-radius 0.15s ease,
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Disable all transitions while dragging */
+.snipalt-window-container.is-dragging {
+  transition: none !important;
 }
 
 .content-box::-webkit-scrollbar {

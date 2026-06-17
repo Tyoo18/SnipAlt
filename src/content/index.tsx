@@ -1,7 +1,7 @@
 // [INIT]: Import layout rendering dependencies and asset style modules
 import React, { useEffect, useState, useRef } from "react";
 import ReactDOM from "react-dom/client";
-import { Layers, SidebarOpen } from "lucide-react";
+import { Layers, SidebarOpen, X } from "lucide-react";
 import styleText from "./style.css?inline";
 
 interface TemporaryClip {
@@ -11,8 +11,11 @@ interface TemporaryClip {
 }
 
 const ContentApp = () => {
-  // [STATE]: Structural state definitions designed for structural view toggles
-  const [tempClips, setTempClips] = useState<TemporaryClip[]>([]);
+  // [STATE]: Structural state definitions integrated with persistent sessionStorage
+  const [tempClips, setTempClips] = useState<TemporaryClip[]>(() => {
+    const savedSessionClips = sessionStorage.getItem("snipalt_workbench_clips");
+    return savedSessionClips ? JSON.parse(savedSessionClips) : [];
+  });
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   const [side, setSide] = useState<"left" | "right">("right");
@@ -41,6 +44,14 @@ const ContentApp = () => {
 
   const currentWidthWidth = isCollapsed ? 48 : 288;
 
+  // [STATE]: Automatically synchronize session cache memory changes
+  useEffect(() => {
+    sessionStorage.setItem(
+      "snipalt_workbench_clips",
+      JSON.stringify(tempClips),
+    );
+  }, [tempClips]);
+
   // [UTIL]: Relay content text directly to Background threads to write to extension's Dexie Database
   const passToBackgroundStorageBridge = (text: string) => {
     chrome.runtime.sendMessage({
@@ -52,13 +63,6 @@ const ContentApp = () => {
         timestamp: Date.now(),
       },
     });
-  };
-
-  const scheduleAutoCollapse = (delayTime: number) => {
-    if (timerRef.current) window.clearTimeout(timerRef.current);
-    timerRef.current = window.setTimeout(() => {
-      setIsCollapsed(true);
-    }, delayTime);
   };
 
   const updateWindowTransformStyles = () => {
@@ -84,6 +88,20 @@ const ContentApp = () => {
     if (!targetCollapseState) {
       scheduleAutoCollapse(6000);
     }
+  };
+
+  // [UTIL]: Secure auto collapse routine rerouted to evaluate geometric parameters safely
+  const scheduleAutoCollapse = (delayTime: number) => {
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => {
+      // FIX FIXED: Reroute straight to calculation layout handlers instead of raw state set
+      handleExpansionToggle(true);
+    }, delayTime);
+  };
+
+  // [HANDLER]: Remove a clip manually from the current UI session stack
+  const handleDeleteLocalClip = (id: string) => {
+    setTempClips((prev) => prev.filter((item) => item.id !== id));
   };
 
   // [HANDLER]: Hardware-accelerated processing engine listening to Alt+S hotkeys
@@ -175,6 +193,11 @@ const ContentApp = () => {
     }
     if (timerRef.current) window.clearTimeout(timerRef.current);
 
+    // Disable transitions while dragging
+    if (windowRef.current) {
+      windowRef.current.classList.add("is-dragging");
+    }
+
     dragPhysics.current.isDragging = true;
     dragPhysics.current.startX = e.clientX - dragPhysics.current.currentX;
     dragPhysics.current.startY = e.clientY - dragPhysics.current.currentY;
@@ -224,6 +247,11 @@ const ContentApp = () => {
     dragPhysics.current.isDragging = false;
     document.removeEventListener("pointermove", handlePointerMoveEngine);
     document.removeEventListener("pointerup", handlePointerUpEngine);
+
+    // Re-enable transitions after drag
+    if (windowRef.current) {
+      windowRef.current.classList.remove("is-dragging");
+    }
 
     const screenHorizontalMidpoint = window.innerWidth / 2;
     const terminalReleasePointX = e.clientX;
@@ -307,6 +335,7 @@ const ContentApp = () => {
             </div>
           </div>
 
+          {/* ACTIVE CONTENT SELECTION SCROLL BOX */}
           <div className="content-box flex-1 border border-white/5 rounded-xl bg-zinc-950/90 overflow-y-auto p-2.5 space-y-2 select-text cursor-auto">
             {tempClips.length === 0 ? (
               <div className="text-[10px] text-zinc-500 text-center pt-8 italic">
@@ -316,9 +345,19 @@ const ContentApp = () => {
               tempClips.map((clipItem) => (
                 <div
                   key={clipItem.id}
-                  className="bg-zinc-900/40 border border-white/5 p-2 rounded-lg text-[11px] text-zinc-300 leading-relaxed select-text"
+                  className="group relative bg-zinc-900/40 border border-white/5 p-2 rounded-lg text-[11px] text-zinc-300 leading-relaxed select-text"
                 >
-                  "{clipItem.text}"
+                  <div className="pr-4">"{clipItem.text}"</div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteLocalClip(clipItem.id);
+                    }}
+                    className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-500 hover:text-rose-400 hover:bg-zinc-800 transition-all cursor-pointer border-none bg-transparent flex items-center justify-center"
+                    title="Delete session clip"
+                  >
+                    <X size={15} />
+                  </button>
                 </div>
               ))
             )}
