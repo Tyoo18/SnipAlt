@@ -1,56 +1,119 @@
-.snipalt-toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 2147483647;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  animation: snipalt-slide-in 0.3s ease-out;
+/* [STYLE]: Core Tailwind CSS directives initialization */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* [STYLE]: Root workbench element wrapper bounds configuration */
+.snipalt-window-container {
+  background-color: #000000 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9) !important;
+  box-sizing: border-box !important;
+  transition:
+    width 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 0.15s ease;
 }
 
-.snipalt-toast-content {
-  background: white;
-  border-radius: 12px;
-  padding: 12px 16px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid #e2e8f0;
-  min-width: 250px;
-  max-width: 350px;
+/* [STYLE]: Mid-air floating structure layout settings */
+.is-floating {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
 }
 
-.snipalt-toast-icon {
-  font-size: 20px;
+/* [STYLE]: Edge snapping border overrides to remove overlapping lines */
+.is-snapped.side-right {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-right: none !important; /* Fix broken visual lines */
 }
 
-.snipalt-toast-text {
-  display: flex;
-  flex-direction: column;
+.is-snapped.side-left {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-left: none !important; /* Fix broken visual lines */
 }
 
-.snipalt-toast-text strong {
-  font-size: 14px;
-  color: #1e293b;
-  margin: 0;
+/* Dynamic border radii properties matching expansion bounds */
+.is-snapped.side-left.is-collapsed {
+  border-radius: 0 16px 16px 0 !important;
+}
+.is-snapped.side-left.is-expanded {
+  border-radius: 0 24px 24px 0 !important;
+}
+.is-snapped.side-right.is-collapsed {
+  border-radius: 16px 0 0 16px !important;
+}
+.is-snapped.side-right.is-expanded {
+  border-radius: 24px 0 0 24px !important;
 }
 
-.snipalt-toast-text p {
-  font-size: 12px;
-  color: #64748b;
-  margin: 2px 0 0 0;
+/* ========================================================
+   PREMIUM HIGH-FIDELITY INVERTED CORNERS ENGINEERING
+   ======================================================== */
+
+.is-snapped::before,
+.is-snapped::after {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  z-index: -1; /* Keep behind active rendering layer */
+}
+
+/* Snap Right Curvatures */
+.is-snapped.side-right::before {
+  top: -24px;
+  right: 0;
+  border-bottom-right-radius: 24px;
+  box-shadow: 12px 12px 0 12px #000000;
+}
+.is-snapped.side-right::after {
+  bottom: -24px;
+  right: 0;
+  border-top-right-radius: 24px;
+  box-shadow: 12px -12px 0 12px #000000;
+}
+
+/* Snap Left Curvatures */
+.is-snapped.side-left::before {
+  top: -24px;
+  left: 0;
+  border-bottom-left-radius: 24px;
+  box-shadow: -12px 12px 0 12px #000000;
+}
+.is-snapped.side-left::after {
+  bottom: -24px;
+  left: 0;
+  border-top-left-radius: 24px;
+  box-shadow: -12px -12px 0 12px #000000;
+}
+
+/* ========================================================
+   PREMIUM MICRO-INTERACTION TOOLTIP ENGINE
+   ======================================================== */
+.snipalt-tooltip-trigger {
+  position: relative;
+}
+
+.snipalt-tooltip-card {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  background-color: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f4f4f5;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 600;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes snipalt-slide-in {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+.snipalt-tooltip-trigger:hover .snipalt-tooltip-card {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
 }

@@ -1,10 +1,10 @@
 import {
   require_react_dom
-} from "/vendor/.vite-deps-chunk-PJEEZAML.js__v--6009e8d6.js";
-import "/vendor/.vite-deps-chunk-DRWLMN53.js__v--6009e8d6.js";
+} from "/vendor/.vite-deps-chunk-PJEEZAML.js__v--7756a481.js";
+import "/vendor/.vite-deps-chunk-DRWLMN53.js__v--7756a481.js";
 import {
   __commonJS
-} from "/vendor/.vite-deps-chunk-G3PMV62Z.js__v--6009e8d6.js";
+} from "/vendor/.vite-deps-chunk-G3PMV62Z.js__v--7756a481.js";
 
 // node_modules/react-dom/client.js
 var require_client = __commonJS({

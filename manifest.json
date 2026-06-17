@@ -3,7 +3,7 @@
   "name": "SnipAlt",
   "version": "1.0.0",
   "description": "The fastest way to save web insights without breaking your flow.",
-  "permissions": ["storage", "sidePanel", "activeTab", "scripting"],
+  "permissions": ["storage", "sidePanel", "activeTab", "contextMenus"],
   "background": {
     "service_worker": "src/background/index.ts",
     "type": "module"

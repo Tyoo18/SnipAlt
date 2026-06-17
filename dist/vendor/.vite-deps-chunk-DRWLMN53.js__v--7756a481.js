@@ -1,6 +1,6 @@
 import {
   __commonJS
-} from "/vendor/.vite-deps-chunk-G3PMV62Z.js__v--6009e8d6.js";
+} from "/vendor/.vite-deps-chunk-G3PMV62Z.js__v--7756a481.js";
 
 // node_modules/react/cjs/react.development.js
 var require_react_development = __commonJS({

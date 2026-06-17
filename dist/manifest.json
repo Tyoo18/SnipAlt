@@ -7,7 +7,7 @@
     "storage",
     "sidePanel",
     "activeTab",
-    "scripting"
+    "contextMenus"
   ],
   "background": {
     "service_worker": "service-worker-loader.js",

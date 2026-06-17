@@ -1,4 +1,4 @@
-import { createHotContext as __vite__createHotContext } from "/vendor/vite-client.js";import.meta.hot = __vite__createHotContext("/src/content/index.tsx.js");import __vite__cjsImport0_react_jsxDevRuntime from "/vendor/.vite-deps-react_jsx-dev-runtime.js__v--1724e9a0.js"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+import { createHotContext as __vite__createHotContext } from "/vendor/vite-client.js";import.meta.hot = __vite__createHotContext("/src/content/index.tsx.js");import __vite__cjsImport0_react_jsxDevRuntime from "/vendor/.vite-deps-react_jsx-dev-runtime.js__v--44d1a227.js"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
 import * as RefreshRuntime from "/vendor/react-refresh.js";
 const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
 let prevRefreshReg;
@@ -14,97 +14,377 @@ if (import.meta.hot && !inWebWorker) {
   window.$RefreshReg$ = RefreshRuntime.getRefreshReg("C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx");
   window.$RefreshSig$ = RefreshRuntime.createSignatureFunctionForTransform;
 }
-var _s = $RefreshSig$(), _s2 = $RefreshSig$();
-import __vite__cjsImport3_react from "/vendor/.vite-deps-react.js__v--1724e9a0.js"; const React = __vite__cjsImport3_react.__esModule ? __vite__cjsImport3_react.default : __vite__cjsImport3_react; const useEffect = __vite__cjsImport3_react["useEffect"]; const useState = __vite__cjsImport3_react["useState"];
-import __vite__cjsImport4_reactDom_client from "/vendor/.vite-deps-react-dom_client.js__v--499dcbf0.js"; const ReactDOM = __vite__cjsImport4_reactDom_client.__esModule ? __vite__cjsImport4_reactDom_client.default : __vite__cjsImport4_reactDom_client;
+var _s = $RefreshSig$();
+import __vite__cjsImport3_react from "/vendor/.vite-deps-react.js__v--44d1a227.js"; const React = __vite__cjsImport3_react.__esModule ? __vite__cjsImport3_react.default : __vite__cjsImport3_react; const useEffect = __vite__cjsImport3_react["useEffect"]; const useState = __vite__cjsImport3_react["useState"]; const useRef = __vite__cjsImport3_react["useRef"];
+import __vite__cjsImport4_reactDom_client from "/vendor/.vite-deps-react-dom_client.js__v--876284a8.js"; const ReactDOM = __vite__cjsImport4_reactDom_client.__esModule ? __vite__cjsImport4_reactDom_client.default : __vite__cjsImport4_reactDom_client;
+import { Layers, SidebarOpen } from "/vendor/.vite-deps-lucide-react.js__v--2710d507.js";
 import styleText from "/src/content/style.css__inline.js";
-const Toast = ({ text, onClose }) => {
-  _s();
-  useEffect(() => {
-    const timer = setTimeout(onClose, 3e3);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-  return /* @__PURE__ */ jsxDEV("div", { className: "snipalt-toast", children: /* @__PURE__ */ jsxDEV("div", { className: "snipalt-toast-content", children: [
-    /* @__PURE__ */ jsxDEV("span", { className: "snipalt-toast-icon", children: "✨" }, void 0, false, {
-      fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-      lineNumber: 38,
-      columnNumber: 9
-    }, this),
-    /* @__PURE__ */ jsxDEV("div", { className: "snipalt-toast-text", children: [
-      /* @__PURE__ */ jsxDEV("strong", { children: "Saved to Vault" }, void 0, false, {
-        fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-        lineNumber: 40,
-        columnNumber: 11
-      }, this),
-      /* @__PURE__ */ jsxDEV("p", { children: [
-        text.substring(0, 50),
-        text.length > 50 ? "..." : ""
-      ] }, void 0, true, {
-        fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-        lineNumber: 41,
-        columnNumber: 11
-      }, this)
-    ] }, void 0, true, {
-      fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-      lineNumber: 39,
-      columnNumber: 9
-    }, this)
-  ] }, void 0, true, {
-    fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-    lineNumber: 37,
-    columnNumber: 7
-  }, this) }, void 0, false, {
-    fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-    lineNumber: 36,
-    columnNumber: 5
-  }, this);
-};
-_s(Toast, "OD7bBpZva5O2jO+Puf00hKivP7c=");
-_c = Toast;
 const ContentApp = () => {
-  _s2();
-  const [activeToast, setActiveToast] = useState(null);
+  _s();
+  const [tempClips, setTempClips] = useState([]);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isVisible, setIsVisible] = useState(true);
+  const [side, setSide] = useState("right");
+  const [isSnapped, setIsSnapped] = useState(true);
+  const windowRef = useRef(null);
+  const timerRef = useRef(null);
+  const dragPhysics = useRef({
+    isDragging: false,
+    startX: 0,
+    startY: 0,
+    currentX: window.innerWidth - 48,
+    currentY: 250,
+    animFrameId: 0,
+    hasMovedPassedThreshold: false
+  });
+  const sideRef = useRef(side);
+  const isCollapsedRef = useRef(isCollapsed);
+  const isSnappedRef = useRef(isSnapped);
+  sideRef.current = side;
+  isCollapsedRef.current = isCollapsed;
+  isSnappedRef.current = isSnapped;
+  const currentWidthWidth = isCollapsed ? 48 : 288;
+  const scheduleAutoCollapse = (delayTime) => {
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => {
+      setIsCollapsed(true);
+    }, delayTime);
+  };
+  const updateWindowTransformStyles = () => {
+    if (!windowRef.current) return;
+    windowRef.current.style.transform = `translate3d(${dragPhysics.current.currentX}px, ${dragPhysics.current.currentY}px, 0)`;
+  };
+  const handleExpansionToggle = (targetCollapseState) => {
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+    if (isSnappedRef.current && sideRef.current === "right") {
+      const startingWidth = isCollapsedRef.current ? 48 : 288;
+      const endingWidth = targetCollapseState ? 48 : 288;
+      const adaptiveDeltaDiff = endingWidth - startingWidth;
+      dragPhysics.current.currentX -= adaptiveDeltaDiff;
+    } else if (isSnappedRef.current && sideRef.current === "left") {
+      dragPhysics.current.currentX = 0;
+    }
+    setIsCollapsed(targetCollapseState);
+    updateWindowTransformStyles();
+    if (!targetCollapseState) {
+      scheduleAutoCollapse(6e3);
+    }
+  };
   useEffect(() => {
-    const listener = (message) => {
-      if (message.type === "SNIPPET_CAPTURED") {
-        setActiveToast(message.payload.text);
+    const processLocalShortcutKeys = (e) => {
+      if (e.altKey && (e.key === "s" || e.key === "S")) {
+        const highlightedSelection = window.getSelection()?.toString()?.trim();
+        if (!highlightedSelection) return;
+        e.preventDefault();
+        const constructedPayload = {
+          id: Math.random().toString(36).substring(2, 9),
+          text: highlightedSelection
+        };
+        setTempClips((prev) => [...prev, constructedPayload]);
+        setIsVisible(true);
+        handleExpansionToggle(false);
       }
     };
-    chrome.runtime.onMessage.addListener(listener);
-    return () => chrome.runtime.onMessage.removeListener(listener);
+    window.addEventListener("keydown", processLocalShortcutKeys);
+    return () => window.removeEventListener("keydown", processLocalShortcutKeys);
   }, []);
-  if (!activeToast) return null;
-  return /* @__PURE__ */ jsxDEV(Toast, { text: activeToast, onClose: () => setActiveToast(null) }, void 0, false, {
-    fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-    lineNumber: 65,
-    columnNumber: 5
-  }, this);
+  useEffect(() => {
+    const processInboundMessageStreams = (message) => {
+      if (message.type === "SNIPPET_CAPTURED" && message.payload?.text) {
+        const structuralPayload = {
+          id: Math.random().toString(36).substring(2, 9),
+          text: message.payload.text
+        };
+        setTempClips((prev) => [...prev, structuralPayload]);
+        setIsVisible(true);
+        handleExpansionToggle(false);
+      } else if (message.type === "TOGGLE_DOCK") {
+        if (tempClips.length === 0) {
+          setTempClips(
+            [
+              {
+                id: "placeholder",
+                text: "Highlight text on any website and press Alt+S to clip insights!"
+              }
+            ]
+          );
+        }
+        setIsVisible((prev) => !prev);
+        handleExpansionToggle(false);
+      }
+    };
+    chrome.runtime.onMessage.addListener(processInboundMessageStreams);
+    return () => chrome.runtime.onMessage.removeListener(processInboundMessageStreams);
+  }, [tempClips]);
+  useEffect(() => {
+    const monitorOutsideClickLayouts = (e) => {
+      const rootHostContainer = document.getElementById("snipalt-root");
+      if (rootHostContainer && !rootHostContainer.shadowRoot?.contains(e.target) && !isCollapsedRef.current) {
+        handleExpansionToggle(true);
+      }
+    };
+    window.addEventListener("click", monitorOutsideClickLayouts);
+    return () => window.removeEventListener("click", monitorOutsideClickLayouts);
+  }, []);
+  useEffect(() => {
+    const handleScreenResizeAdjustment = () => {
+      const horizontalLimitWidth = isCollapsedRef.current ? 48 : 288;
+      const adaptiveTargetX = sideRef.current === "right" ? window.innerWidth - horizontalLimitWidth : 0;
+      dragPhysics.current.currentX = adaptiveTargetX;
+      updateWindowTransformStyles();
+    };
+    window.addEventListener("resize", handleScreenResizeAdjustment);
+    return () => window.removeEventListener("resize", handleScreenResizeAdjustment);
+  }, []);
+  const handlePointerDownEngine = (e) => {
+    if (e.target.closest("button") || e.target.closest(".content-box")) {
+      return;
+    }
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+    dragPhysics.current.isDragging = true;
+    dragPhysics.current.startX = e.clientX - dragPhysics.current.currentX;
+    dragPhysics.current.startY = e.clientY - dragPhysics.current.currentY;
+    dragPhysics.current.hasMovedPassedThreshold = false;
+    document.addEventListener("pointermove", handlePointerMoveEngine);
+    document.addEventListener("pointerup", handlePointerUpEngine);
+    e.target.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  };
+  const handlePointerMoveEngine = (e) => {
+    if (!dragPhysics.current.isDragging) return;
+    let deltaCalculatedX = e.clientX - dragPhysics.current.startX;
+    let deltaCalculatedY = e.clientY - dragPhysics.current.startY;
+    const constraintWidth = isCollapsedRef.current ? 48 : 288;
+    const constraintHeight = isCollapsedRef.current ? 176 : 288;
+    deltaCalculatedX = Math.max(
+      0,
+      Math.min(window.innerWidth - constraintWidth, deltaCalculatedX)
+    );
+    deltaCalculatedY = Math.max(
+      16,
+      Math.min(window.innerHeight - constraintHeight - 16, deltaCalculatedY)
+    );
+    if (!dragPhysics.current.hasMovedPassedThreshold) {
+      dragPhysics.current.hasMovedPassedThreshold = true;
+      setIsSnapped(false);
+    }
+    dragPhysics.current.currentX = deltaCalculatedX;
+    dragPhysics.current.currentY = deltaCalculatedY;
+    if (dragPhysics.current.animFrameId)
+      cancelAnimationFrame(dragPhysics.current.animFrameId);
+    dragPhysics.current.animFrameId = requestAnimationFrame(
+      updateWindowTransformStyles
+    );
+  };
+  const handlePointerUpEngine = (e) => {
+    dragPhysics.current.isDragging = false;
+    document.removeEventListener("pointermove", handlePointerMoveEngine);
+    document.removeEventListener("pointerup", handlePointerUpEngine);
+    const screenHorizontalMidpoint = window.innerWidth / 2;
+    const terminalReleasePointX = e.clientX;
+    const panelCurrentWidth = isCollapsedRef.current ? 48 : 288;
+    let computedFinalTargetSide = "right";
+    let automatedSnapLockCoordinateX = window.innerWidth - panelCurrentWidth;
+    if (terminalReleasePointX < screenHorizontalMidpoint) {
+      computedFinalTargetSide = "left";
+      automatedSnapLockCoordinateX = 0;
+    }
+    setSide(computedFinalTargetSide);
+    setIsSnapped(true);
+    dragPhysics.current.currentX = automatedSnapLockCoordinateX;
+    requestAnimationFrame(() => {
+      updateWindowTransformStyles();
+      if (!isCollapsedRef.current) {
+        scheduleAutoCollapse(5e3);
+      }
+    });
+  };
+  const routeSidepanelActivation = () => {
+    chrome.runtime.sendMessage({ type: "OPEN_SIDEPANEL" });
+  };
+  if (!isVisible || tempClips.length === 0) return null;
+  return /* @__PURE__ */ jsxDEV(
+    "div",
+    {
+      ref: windowRef,
+      onPointerDown: handlePointerDownEngine,
+      style: {
+        width: `${currentWidthWidth}px`,
+        transform: `translate3d(${dragPhysics.current.currentX}px, ${dragPhysics.current.currentY}px, 0)`
+      },
+      className: `fixed top-0 left-0 z-[2147483647] select-none font-sans text-slate-200 cursor-grab active:cursor-grabbing snipalt-window-container ${isSnapped ? "is-snapped" : "is-floating"} ${side === "right" ? "side-right" : "side-left"} ${isCollapsed ? "is-collapsed h-44" : "is-expanded h-72"}`,
+      children: isCollapsed ? (
+        /* ========================================================
+           COMPACT VIEW WORKBENCH NODE (TRUE PITCH BLACK)
+           ======================================================== */
+        /* @__PURE__ */ jsxDEV(
+          "div",
+          {
+            onClick: () => handleExpansionToggle(false),
+            onMouseEnter: () => handleExpansionToggle(false),
+            className: `w-full h-full flex flex-col items-center justify-center transition-colors hover:bg-zinc-950/40 ${side === "right" ? "rounded-l-2xl" : "rounded-r-2xl"}`,
+            children: /* @__PURE__ */ jsxDEV("div", { className: "w-7 h-[148px] border border-white/5 rounded-xl flex flex-col items-center justify-center bg-zinc-900/40", children: [
+              /* @__PURE__ */ jsxDEV(Layers, { size: 13, className: "text-blue-400 animate-pulse" }, void 0, false, {
+                fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+                lineNumber: 309,
+                columnNumber: 13
+              }, this),
+              /* @__PURE__ */ jsxDEV("span", { className: "text-[10px] font-black text-white mt-1.5 tracking-tighter", children: tempClips.length }, void 0, false, {
+                fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+                lineNumber: 310,
+                columnNumber: 13
+              }, this)
+            ] }, void 0, true, {
+              fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+              lineNumber: 308,
+              columnNumber: 11
+            }, this)
+          },
+          void 0,
+          false,
+          {
+            fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+            lineNumber: 301,
+            columnNumber: 7
+          },
+          this
+        )
+      ) : (
+        /* ========================================================
+           EXPANDED VIEW PANEL SCREEN INTERFACE 
+           ======================================================== */
+        /* @__PURE__ */ jsxDEV("div", { className: "w-full h-full flex flex-col p-3 box-border", children: [
+          /* @__PURE__ */ jsxDEV("div", { className: "flex items-center justify-between mb-2.5 overflow-visible", children: [
+            /* @__PURE__ */ jsxDEV("div", { className: "flex items-center gap-1.5 pl-0.5 pointer-events-none", children: [
+              /* @__PURE__ */ jsxDEV(Layers, { size: 12, className: "text-blue-400" }, void 0, false, {
+                fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+                lineNumber: 323,
+                columnNumber: 15
+              }, this),
+              /* @__PURE__ */ jsxDEV("span", { className: "text-[10px] font-bold uppercase tracking-wider text-zinc-400", children: "SnipAlt Workbench" }, void 0, false, {
+                fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+                lineNumber: 324,
+                columnNumber: 15
+              }, this)
+            ] }, void 0, true, {
+              fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+              lineNumber: 322,
+              columnNumber: 13
+            }, this),
+            /* @__PURE__ */ jsxDEV("div", { className: "snipalt-tooltip-trigger", children: [
+              /* @__PURE__ */ jsxDEV(
+                "button",
+                {
+                  onClick: routeSidepanelActivation,
+                  className: "p-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-md border border-white/10 flex items-center justify-center shadow-sm transition-all",
+                  children: /* @__PURE__ */ jsxDEV(SidebarOpen, { size: 13 }, void 0, false, {
+                    fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+                    lineNumber: 335,
+                    columnNumber: 17
+                  }, this)
+                },
+                void 0,
+                false,
+                {
+                  fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+                  lineNumber: 331,
+                  columnNumber: 15
+                },
+                this
+              ),
+              /* @__PURE__ */ jsxDEV("div", { className: "snipalt-tooltip-card", children: "Open Permanent Vault Sidepanel" }, void 0, false, {
+                fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+                lineNumber: 337,
+                columnNumber: 15
+              }, this)
+            ] }, void 0, true, {
+              fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+              lineNumber: 330,
+              columnNumber: 13
+            }, this)
+          ] }, void 0, true, {
+            fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+            lineNumber: 321,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV("div", { className: "content-box flex-1 border border-white/5 rounded-xl bg-zinc-950/90 overflow-y-auto p-2.5 space-y-2 select-text cursor-auto", children: tempClips.map(
+            (clipItem) => /* @__PURE__ */ jsxDEV(
+              "div",
+              {
+                className: "bg-zinc-900/40 border border-white/5 p-2 rounded-lg text-[11px] text-zinc-300 leading-relaxed select-text",
+                children: [
+                  '"',
+                  clipItem.text,
+                  '"'
+                ]
+              },
+              clipItem.id,
+              true,
+              {
+                fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+                lineNumber: 346,
+                columnNumber: 11
+              },
+              this
+            )
+          ) }, void 0, false, {
+            fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+            lineNumber: 344,
+            columnNumber: 11
+          }, this)
+        ] }, void 0, true, {
+          fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+          lineNumber: 319,
+          columnNumber: 7
+        }, this)
+      )
+    },
+    void 0,
+    false,
+    {
+      fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+      lineNumber: 284,
+      columnNumber: 5
+    },
+    this
+  );
 };
-_s2(ContentApp, "DVrCAJmi/G1Th4dD4JEKSLxFBqM=");
-_c2 = ContentApp;
-const rootElement = document.createElement("div");
-rootElement.id = "snipalt-root";
-document.body.appendChild(rootElement);
-const shadowRoot = rootElement.attachShadow({ mode: "open" });
-const shadowContainer = document.createElement("div");
-shadowRoot.appendChild(shadowContainer);
-const styleElement = document.createElement("style");
-styleElement.textContent = styleText;
-shadowRoot.appendChild(styleElement);
-ReactDOM.createRoot(shadowContainer).render(
-  /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(ContentApp, {}, void 0, false, {
-    fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-    lineNumber: 85,
-    columnNumber: 5
-  }, this) }, void 0, false, {
-    fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-    lineNumber: 84,
-    columnNumber: 3
-  }, this)
-);
-var _c, _c2;
-$RefreshReg$(_c, "Toast");
-$RefreshReg$(_c2, "ContentApp");
+_s(ContentApp, "z5NgtIV31qix6WVPTJpOUkb2DWM=");
+_c = ContentApp;
+const initSnipAltDock = () => {
+  if (document.getElementById("snipalt-root")) return;
+  const nativeHostNode = document.createElement("div");
+  nativeHostNode.id = "snipalt-root";
+  if (!document.body) {
+    document.documentElement.appendChild(nativeHostNode);
+  } else {
+    document.body.appendChild(nativeHostNode);
+  }
+  const virtualShadowRoot = nativeHostNode.attachShadow({ mode: "open" });
+  const appContainerMount = document.createElement("div");
+  virtualShadowRoot.appendChild(appContainerMount);
+  const runtimeEmbeddedStyle = document.createElement("style");
+  runtimeEmbeddedStyle.textContent = styleText;
+  virtualShadowRoot.appendChild(runtimeEmbeddedStyle);
+  ReactDOM.createRoot(appContainerMount).render(
+    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(ContentApp, {}, void 0, false, {
+      fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+      lineNumber: 386,
+      columnNumber: 7
+    }, this) }, void 0, false, {
+      fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+      lineNumber: 385,
+      columnNumber: 5
+    }, this)
+  );
+};
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initSnipAltDock);
+} else {
+  initSnipAltDock();
+}
+var _c;
+$RefreshReg$(_c, "ContentApp");
 if (import.meta.hot && !inWebWorker) {
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
