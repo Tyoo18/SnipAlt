@@ -20,6 +20,7 @@ const ContentApp = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [side, setSide] = useState<"left" | "right">("right");
   const [isSnapped, setIsSnapped] = useState(true);
+  const [resolvedDark, setResolvedDark] = useState(true);
 
   const windowRef = useRef<HTMLDivElement | null>(null);
   const timerRef = useRef<number | null>(null);
@@ -51,6 +52,49 @@ const ContentApp = () => {
       JSON.stringify(tempClips),
     );
   }, [tempClips]);
+
+  // [STATE]: Reactive system theme integration synchronization engine
+  useEffect(() => {
+    const evaluateVisualThemeSetting = (themeSetting: string) => {
+      if (themeSetting === "dark") {
+        setResolvedDark(true);
+      } else if (themeSetting === "light") {
+        setResolvedDark(false);
+      } else {
+        const isChromeSystemDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        setResolvedDark(isChromeSystemDark);
+      }
+    };
+
+    chrome.storage.local.get(["snipalt_theme"], (res) => {
+      evaluateVisualThemeSetting(res.snipalt_theme || "system");
+    });
+
+    const monitorStorageChanges = (changes: any) => {
+      if (changes.snipalt_theme) {
+        evaluateVisualThemeSetting(changes.snipalt_theme.newValue);
+      }
+    };
+
+    const monitorSystemMediaSpecs = (e: MediaQueryListEvent) => {
+      chrome.storage.local.get(["snipalt_theme"], (res) => {
+        if ((res.snipalt_theme || "system") === "system") {
+          setResolvedDark(e.matches);
+        }
+      });
+    };
+
+    chrome.storage.onChanged.addListener(monitorStorageChanges);
+    const darkMediaMatcher = window.matchMedia("(prefers-color-scheme: dark)");
+    darkMediaMatcher.addEventListener("change", monitorSystemMediaSpecs);
+
+    return () => {
+      chrome.storage.onChanged.removeListener(monitorStorageChanges);
+      darkMediaMatcher.removeEventListener("change", monitorSystemMediaSpecs);
+    };
+  }, []);
 
   // [UTIL]: Relay content text directly to Background threads to write to extension's Dexie Database
   const passToBackgroundStorageBridge = (text: string) => {
@@ -94,7 +138,6 @@ const ContentApp = () => {
   const scheduleAutoCollapse = (delayTime: number) => {
     if (timerRef.current) window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => {
-      // FIX FIXED: Reroute straight to calculation layout handlers instead of raw state set
       handleExpansionToggle(true);
     }, delayTime);
   };
@@ -193,7 +236,6 @@ const ContentApp = () => {
     }
     if (timerRef.current) window.clearTimeout(timerRef.current);
 
-    // Disable transitions while dragging
     if (windowRef.current) {
       windowRef.current.classList.add("is-dragging");
     }
@@ -248,7 +290,6 @@ const ContentApp = () => {
     document.removeEventListener("pointermove", handlePointerMoveEngine);
     document.removeEventListener("pointerup", handlePointerUpEngine);
 
-    // Re-enable transitions after drag
     if (windowRef.current) {
       windowRef.current.classList.remove("is-dragging");
     }
@@ -291,23 +332,26 @@ const ContentApp = () => {
         width: `${currentWidthWidth}px`,
         transform: `translate3d(${dragPhysics.current.currentX}px, ${dragPhysics.current.currentY}px, 0)`,
       }}
-      className={`fixed top-0 left-0 z-[2147483647] select-none text-slate-200 cursor-grab active:cursor-grabbing snipalt-window-container ${
-        isSnapped ? "is-snapped" : "is-floating"
-      } ${side === "right" ? "side-right" : "side-left"} ${
-        isCollapsed ? "is-collapsed h-44" : "is-expanded h-72"
-      }`}
+      className={`fixed top-0 left-0 z-[2147483647] select-none cursor-grab active:cursor-grabbing snipalt-window-container ${
+        resolvedDark ? "dark text-slate-200" : "text-zinc-800"
+      } ${isSnapped ? "is-snapped" : "is-floating"} ${
+        side === "right" ? "side-right" : "side-left"
+      } ${isCollapsed ? "is-collapsed h-44" : "is-expanded h-72"}`}
     >
       {isCollapsed ? (
         <div
           onClick={() => handleExpansionToggle(false)}
           onMouseEnter={() => handleExpansionToggle(false)}
-          className={`w-full h-full flex flex-col items-center justify-center transition-colors hover:bg-zinc-950/40 ${
+          className={`w-full h-full flex flex-col items-center justify-center transition-colors hover:bg-zinc-500/10 ${
             side === "right" ? "rounded-l-2xl" : "rounded-r-2xl"
           }`}
         >
-          <div className="w-7 h-[148px] border border-white/5 rounded-xl flex flex-col items-center justify-center bg-zinc-900/40">
-            <Layers size={13} className="text-blue-400 animate-pulse" />
-            <span className="text-[10px] font-black text-white mt-1.5 tracking-tighter">
+          <div className="w-7 h-[148px] border border-black/5 dark:border-white/5 rounded-xl flex flex-col items-center justify-center bg-slate-100/80 dark:bg-zinc-900/40">
+            <Layers
+              size={13}
+              className="text-blue-500 dark:text-blue-400 animate-pulse"
+            />
+            <span className="text-[10px] font-black text-zinc-900 dark:text-white mt-1.5 tracking-tighter">
               {tempClips.length}
             </span>
           </div>
@@ -316,8 +360,8 @@ const ContentApp = () => {
         <div className="w-full h-full flex flex-col p-3 box-border">
           <div className="flex items-center justify-between mb-2.5 overflow-visible">
             <div className="flex items-center gap-1.5 pl-0.5 pointer-events-none">
-              <Layers size={12} className="text-blue-400" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+              <Layers size={12} className="text-blue-500 dark:text-blue-400" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 SnipAlt Workbench
               </span>
             </div>
@@ -325,7 +369,7 @@ const ContentApp = () => {
             <div className="snipalt-tooltip-trigger">
               <button
                 onClick={routeSidepanelActivation}
-                className="p-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-md border border-white/10 flex items-center justify-center shadow-sm transition-all"
+                className="p-1.5 bg-white dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded-md border border-zinc-200 dark:border-white/10 flex items-center justify-center shadow-sm transition-all"
               >
                 <SidebarOpen size={13} />
               </button>
@@ -336,16 +380,16 @@ const ContentApp = () => {
           </div>
 
           {/* ACTIVE CONTENT SELECTION SCROLL BOX */}
-          <div className="content-box flex-1 border border-white/5 rounded-xl bg-zinc-950/90 overflow-y-auto p-2.5 space-y-2 select-text cursor-auto">
+          <div className="content-box flex-1 border border-zinc-200 dark:border-white/5 rounded-xl bg-slate-50 dark:bg-zinc-950/90 overflow-y-auto p-2.5 space-y-2 select-text cursor-auto">
             {tempClips.length === 0 ? (
-              <div className="text-[10px] text-zinc-500 text-center pt-8 italic">
+              <div className="text-[10px] text-zinc-400 dark:text-zinc-500 text-center pt-8 italic">
                 No active clips in this session.
               </div>
             ) : (
               tempClips.map((clipItem) => (
                 <div
                   key={clipItem.id}
-                  className="group relative bg-zinc-900/40 border border-white/5 p-2 rounded-lg text-[11px] text-zinc-300 leading-relaxed select-text"
+                  className="group relative bg-white dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-white/5 p-2 rounded-lg text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed select-text shadow-sm"
                 >
                   <div className="pr-4">"{clipItem.text}"</div>
                   <button
@@ -353,7 +397,7 @@ const ContentApp = () => {
                       e.stopPropagation();
                       handleDeleteLocalClip(clipItem.id);
                     }}
-                    className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-500 hover:text-rose-400 hover:bg-zinc-800 transition-all cursor-pointer border-none bg-transparent flex items-center justify-center"
+                    className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer border-none bg-transparent flex items-center justify-center"
                     title="Delete session clip"
                   >
                     <X size={15} />

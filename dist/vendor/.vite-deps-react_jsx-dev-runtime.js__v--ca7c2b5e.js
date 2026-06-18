@@ -1,9 +1,9 @@
 import {
   require_react
-} from "/vendor/.vite-deps-chunk-DRWLMN53.js__v--7756a481.js";
+} from "/vendor/.vite-deps-chunk-DRWLMN53.js__v--ca7c2b5e.js";
 import {
   __commonJS
-} from "/vendor/.vite-deps-chunk-G3PMV62Z.js__v--7756a481.js";
+} from "/vendor/.vite-deps-chunk-G3PMV62Z.js__v--ca7c2b5e.js";
 
 // node_modules/react/cjs/react-jsx-dev-runtime.development.js
 var require_react_jsx_dev_runtime_development = __commonJS({

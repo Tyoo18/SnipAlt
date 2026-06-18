@@ -1,4 +1,4 @@
-import { createHotContext as __vite__createHotContext } from "/vendor/vite-client.js";import.meta.hot = __vite__createHotContext("/src/content/index.tsx.js");import __vite__cjsImport0_react_jsxDevRuntime from "/vendor/.vite-deps-react_jsx-dev-runtime.js__v--44d1a227.js"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+import { createHotContext as __vite__createHotContext } from "/vendor/vite-client.js";import.meta.hot = __vite__createHotContext("/src/content/index.tsx.js");import __vite__cjsImport0_react_jsxDevRuntime from "/vendor/.vite-deps-react_jsx-dev-runtime.js__v--ca7c2b5e.js"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
 import * as RefreshRuntime from "/vendor/react-refresh.js";
 const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
 let prevRefreshReg;
@@ -15,9 +15,9 @@ if (import.meta.hot && !inWebWorker) {
   window.$RefreshSig$ = RefreshRuntime.createSignatureFunctionForTransform;
 }
 var _s = $RefreshSig$();
-import __vite__cjsImport3_react from "/vendor/.vite-deps-react.js__v--44d1a227.js"; const React = __vite__cjsImport3_react.__esModule ? __vite__cjsImport3_react.default : __vite__cjsImport3_react; const useEffect = __vite__cjsImport3_react["useEffect"]; const useState = __vite__cjsImport3_react["useState"]; const useRef = __vite__cjsImport3_react["useRef"];
-import __vite__cjsImport4_reactDom_client from "/vendor/.vite-deps-react-dom_client.js__v--876284a8.js"; const ReactDOM = __vite__cjsImport4_reactDom_client.__esModule ? __vite__cjsImport4_reactDom_client.default : __vite__cjsImport4_reactDom_client;
-import { Layers, SidebarOpen, X } from "/vendor/.vite-deps-lucide-react.js__v--2710d507.js";
+import __vite__cjsImport3_react from "/vendor/.vite-deps-react.js__v--ca7c2b5e.js"; const React = __vite__cjsImport3_react.__esModule ? __vite__cjsImport3_react.default : __vite__cjsImport3_react; const useEffect = __vite__cjsImport3_react["useEffect"]; const useState = __vite__cjsImport3_react["useState"]; const useRef = __vite__cjsImport3_react["useRef"];
+import __vite__cjsImport4_reactDom_client from "/vendor/.vite-deps-react-dom_client.js__v--ca7c2b5e.js"; const ReactDOM = __vite__cjsImport4_reactDom_client.__esModule ? __vite__cjsImport4_reactDom_client.default : __vite__cjsImport4_reactDom_client;
+import { Layers, SidebarOpen, X } from "/vendor/.vite-deps-lucide-react.js__v--ca7c2b5e.js";
 import styleText from "/src/content/style.css__inline.js";
 const ContentApp = () => {
   _s();
@@ -29,6 +29,7 @@ const ContentApp = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [side, setSide] = useState("right");
   const [isSnapped, setIsSnapped] = useState(true);
+  const [resolvedDark, setResolvedDark] = useState(true);
   const windowRef = useRef(null);
   const timerRef = useRef(null);
   const dragPhysics = useRef({
@@ -53,6 +54,42 @@ const ContentApp = () => {
       JSON.stringify(tempClips)
     );
   }, [tempClips]);
+  useEffect(() => {
+    const evaluateVisualThemeSetting = (themeSetting) => {
+      if (themeSetting === "dark") {
+        setResolvedDark(true);
+      } else if (themeSetting === "light") {
+        setResolvedDark(false);
+      } else {
+        const isChromeSystemDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+        setResolvedDark(isChromeSystemDark);
+      }
+    };
+    chrome.storage.local.get(["snipalt_theme"], (res) => {
+      evaluateVisualThemeSetting(res.snipalt_theme || "system");
+    });
+    const monitorStorageChanges = (changes) => {
+      if (changes.snipalt_theme) {
+        evaluateVisualThemeSetting(changes.snipalt_theme.newValue);
+      }
+    };
+    const monitorSystemMediaSpecs = (e) => {
+      chrome.storage.local.get(["snipalt_theme"], (res) => {
+        if ((res.snipalt_theme || "system") === "system") {
+          setResolvedDark(e.matches);
+        }
+      });
+    };
+    chrome.storage.onChanged.addListener(monitorStorageChanges);
+    const darkMediaMatcher = window.matchMedia("(prefers-color-scheme: dark)");
+    darkMediaMatcher.addEventListener("change", monitorSystemMediaSpecs);
+    return () => {
+      chrome.storage.onChanged.removeListener(monitorStorageChanges);
+      darkMediaMatcher.removeEventListener("change", monitorSystemMediaSpecs);
+    };
+  }, []);
   const passToBackgroundStorageBridge = (text) => {
     chrome.runtime.sendMessage({
       type: "SAVE_CLIP",
@@ -234,27 +271,37 @@ const ContentApp = () => {
         width: `${currentWidthWidth}px`,
         transform: `translate3d(${dragPhysics.current.currentX}px, ${dragPhysics.current.currentY}px, 0)`
       },
-      className: `fixed top-0 left-0 z-[2147483647] select-none text-slate-200 cursor-grab active:cursor-grabbing snipalt-window-container ${isSnapped ? "is-snapped" : "is-floating"} ${side === "right" ? "side-right" : "side-left"} ${isCollapsed ? "is-collapsed h-44" : "is-expanded h-72"}`,
+      className: `fixed top-0 left-0 z-[2147483647] select-none cursor-grab active:cursor-grabbing snipalt-window-container ${resolvedDark ? "dark text-slate-200" : "text-zinc-800"} ${isSnapped ? "is-snapped" : "is-floating"} ${side === "right" ? "side-right" : "side-left"} ${isCollapsed ? "is-collapsed h-44" : "is-expanded h-72"}`,
       children: isCollapsed ? /* @__PURE__ */ jsxDEV(
         "div",
         {
           onClick: () => handleExpansionToggle(false),
           onMouseEnter: () => handleExpansionToggle(false),
-          className: `w-full h-full flex flex-col items-center justify-center transition-colors hover:bg-zinc-950/40 ${side === "right" ? "rounded-l-2xl" : "rounded-r-2xl"}`,
-          children: /* @__PURE__ */ jsxDEV("div", { className: "w-7 h-[148px] border border-white/5 rounded-xl flex flex-col items-center justify-center bg-zinc-900/40", children: [
-            /* @__PURE__ */ jsxDEV(Layers, { size: 13, className: "text-blue-400 animate-pulse" }, void 0, false, {
+          className: `w-full h-full flex flex-col items-center justify-center transition-colors hover:bg-zinc-500/10 ${side === "right" ? "rounded-l-2xl" : "rounded-r-2xl"}`,
+          children: /* @__PURE__ */ jsxDEV("div", { className: "w-7 h-[148px] border border-black/5 dark:border-white/5 rounded-xl flex flex-col items-center justify-center bg-slate-100/80 dark:bg-zinc-900/40", children: [
+            /* @__PURE__ */ jsxDEV(
+              Layers,
+              {
+                size: 13,
+                className: "text-blue-500 dark:text-blue-400 animate-pulse"
+              },
+              void 0,
+              false,
+              {
+                fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
+                lineNumber: 369,
+                columnNumber: 13
+              },
+              this
+            ),
+            /* @__PURE__ */ jsxDEV("span", { className: "text-[10px] font-black text-zinc-900 dark:text-white mt-1.5 tracking-tighter", children: tempClips.length }, void 0, false, {
               fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-              lineNumber: 328,
-              columnNumber: 13
-            }, this),
-            /* @__PURE__ */ jsxDEV("span", { className: "text-[10px] font-black text-white mt-1.5 tracking-tighter", children: tempClips.length }, void 0, false, {
-              fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-              lineNumber: 329,
+              lineNumber: 373,
               columnNumber: 13
             }, this)
           ] }, void 0, true, {
             fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-            lineNumber: 327,
+            lineNumber: 368,
             columnNumber: 11
           }, this)
         },
@@ -262,26 +309,26 @@ const ContentApp = () => {
         false,
         {
           fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-          lineNumber: 320,
+          lineNumber: 361,
           columnNumber: 7
         },
         this
       ) : /* @__PURE__ */ jsxDEV("div", { className: "w-full h-full flex flex-col p-3 box-border", children: [
         /* @__PURE__ */ jsxDEV("div", { className: "flex items-center justify-between mb-2.5 overflow-visible", children: [
           /* @__PURE__ */ jsxDEV("div", { className: "flex items-center gap-1.5 pl-0.5 pointer-events-none", children: [
-            /* @__PURE__ */ jsxDEV(Layers, { size: 12, className: "text-blue-400" }, void 0, false, {
+            /* @__PURE__ */ jsxDEV(Layers, { size: 12, className: "text-blue-500 dark:text-blue-400" }, void 0, false, {
               fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-              lineNumber: 338,
+              lineNumber: 382,
               columnNumber: 15
             }, this),
-            /* @__PURE__ */ jsxDEV("span", { className: "text-[10px] font-bold uppercase tracking-wider text-zinc-400", children: "SnipAlt Workbench" }, void 0, false, {
+            /* @__PURE__ */ jsxDEV("span", { className: "text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400", children: "SnipAlt Workbench" }, void 0, false, {
               fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-              lineNumber: 339,
+              lineNumber: 383,
               columnNumber: 15
             }, this)
           ] }, void 0, true, {
             fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-            lineNumber: 337,
+            lineNumber: 381,
             columnNumber: 13
           }, this),
           /* @__PURE__ */ jsxDEV("div", { className: "snipalt-tooltip-trigger", children: [
@@ -289,10 +336,10 @@ const ContentApp = () => {
               "button",
               {
                 onClick: routeSidepanelActivation,
-                className: "p-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-md border border-white/10 flex items-center justify-center shadow-sm transition-all",
+                className: "p-1.5 bg-white dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded-md border border-zinc-200 dark:border-white/10 flex items-center justify-center shadow-sm transition-all",
                 children: /* @__PURE__ */ jsxDEV(SidebarOpen, { size: 13 }, void 0, false, {
                   fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-                  lineNumber: 349,
+                  lineNumber: 393,
                   columnNumber: 17
                 }, this)
               },
@@ -300,35 +347,35 @@ const ContentApp = () => {
               false,
               {
                 fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-                lineNumber: 345,
+                lineNumber: 389,
                 columnNumber: 15
               },
               this
             ),
             /* @__PURE__ */ jsxDEV("div", { className: "snipalt-tooltip-card", children: "Open Permanent Vault Sidepanel" }, void 0, false, {
               fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-              lineNumber: 351,
+              lineNumber: 395,
               columnNumber: 15
             }, this)
           ] }, void 0, true, {
             fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-            lineNumber: 344,
+            lineNumber: 388,
             columnNumber: 13
           }, this)
         ] }, void 0, true, {
           fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-          lineNumber: 336,
+          lineNumber: 380,
           columnNumber: 11
         }, this),
-        /* @__PURE__ */ jsxDEV("div", { className: "content-box flex-1 border border-white/5 rounded-xl bg-zinc-950/90 overflow-y-auto p-2.5 space-y-2 select-text cursor-auto", children: tempClips.length === 0 ? /* @__PURE__ */ jsxDEV("div", { className: "text-[10px] text-zinc-500 text-center pt-8 italic", children: "No active clips in this session." }, void 0, false, {
+        /* @__PURE__ */ jsxDEV("div", { className: "content-box flex-1 border border-zinc-200 dark:border-white/5 rounded-xl bg-slate-50 dark:bg-zinc-950/90 overflow-y-auto p-2.5 space-y-2 select-text cursor-auto", children: tempClips.length === 0 ? /* @__PURE__ */ jsxDEV("div", { className: "text-[10px] text-zinc-400 dark:text-zinc-500 text-center pt-8 italic", children: "No active clips in this session." }, void 0, false, {
           fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-          lineNumber: 360,
+          lineNumber: 404,
           columnNumber: 11
         }, this) : tempClips.map(
           (clipItem) => /* @__PURE__ */ jsxDEV(
             "div",
             {
-              className: "group relative bg-zinc-900/40 border border-white/5 p-2 rounded-lg text-[11px] text-zinc-300 leading-relaxed select-text",
+              className: "group relative bg-white dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-white/5 p-2 rounded-lg text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed select-text shadow-sm",
               children: [
                 /* @__PURE__ */ jsxDEV("div", { className: "pr-4", children: [
                   '"',
@@ -336,7 +383,7 @@ const ContentApp = () => {
                   '"'
                 ] }, void 0, true, {
                   fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-                  lineNumber: 369,
+                  lineNumber: 413,
                   columnNumber: 19
                 }, this),
                 /* @__PURE__ */ jsxDEV(
@@ -346,11 +393,11 @@ const ContentApp = () => {
                       e.stopPropagation();
                       handleDeleteLocalClip(clipItem.id);
                     },
-                    className: "absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-500 hover:text-rose-400 hover:bg-zinc-800 transition-all cursor-pointer border-none bg-transparent flex items-center justify-center",
+                    className: "absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all cursor-pointer border-none bg-transparent flex items-center justify-center",
                     title: "Delete session clip",
                     children: /* @__PURE__ */ jsxDEV(X, { size: 15 }, void 0, false, {
                       fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-                      lineNumber: 378,
+                      lineNumber: 422,
                       columnNumber: 21
                     }, this)
                   },
@@ -358,7 +405,7 @@ const ContentApp = () => {
                   false,
                   {
                     fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-                    lineNumber: 370,
+                    lineNumber: 414,
                     columnNumber: 19
                   },
                   this
@@ -369,19 +416,19 @@ const ContentApp = () => {
             true,
             {
               fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-              lineNumber: 365,
+              lineNumber: 409,
               columnNumber: 11
             },
             this
           )
         ) }, void 0, false, {
           fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-          lineNumber: 358,
+          lineNumber: 402,
           columnNumber: 11
         }, this)
       ] }, void 0, true, {
         fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-        lineNumber: 335,
+        lineNumber: 379,
         columnNumber: 7
       }, this)
     },
@@ -389,13 +436,13 @@ const ContentApp = () => {
     false,
     {
       fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-      lineNumber: 306,
+      lineNumber: 347,
       columnNumber: 5
     },
     this
   );
 };
-_s(ContentApp, "6Y444ELCShiOiBh1uVMgTywHDGk=");
+_s(ContentApp, "vI5zc9nImFuxNoZH7+jmVlMzUOw=");
 _c = ContentApp;
 const initSnipAltDock = () => {
   if (document.getElementById("snipalt-root")) return;
@@ -415,11 +462,11 @@ const initSnipAltDock = () => {
   ReactDOM.createRoot(appContainerMount).render(
     /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(ContentApp, {}, void 0, false, {
       fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-      lineNumber: 412,
+      lineNumber: 456,
       columnNumber: 7
     }, this) }, void 0, false, {
       fileName: "C:/Users/User/Desktop/NgodingVScode/Chrome EXT/snipalt/src/content/index.tsx",
-      lineNumber: 411,
+      lineNumber: 455,
       columnNumber: 5
     }, this)
   );

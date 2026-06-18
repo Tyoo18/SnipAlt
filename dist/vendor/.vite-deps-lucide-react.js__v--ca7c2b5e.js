@@ -1,10 +1,10 @@
 import {
   require_react
-} from "/vendor/.vite-deps-chunk-DRWLMN53.js__v--7756a481.js";
+} from "/vendor/.vite-deps-chunk-DRWLMN53.js__v--ca7c2b5e.js";
 import {
   __export,
   __toESM
-} from "/vendor/.vite-deps-chunk-G3PMV62Z.js__v--7756a481.js";
+} from "/vendor/.vite-deps-chunk-G3PMV62Z.js__v--ca7c2b5e.js";
 
 // node_modules/lucide-react/dist/esm/icons/index.js
 var icons_exports = {};
