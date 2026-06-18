@@ -5,14 +5,20 @@
 
 /* [STYLE]: Root workbench element wrapper bounds configuration */
 .snipalt-window-container {
-  background-color: #000000 !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9) !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15) !important;
   box-sizing: border-box !important;
   transition:
     width 0.2s cubic-bezier(0.16, 1, 0.3, 1),
     height 0.2s cubic-bezier(0.16, 1, 0.3, 1),
     border-radius 0.15s ease,
     transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Switch background style dynamically inside dark sandbox */
+.snipalt-window-container.dark {
+  background-color: #000000 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9) !important;
 }
 
 /* Disable all transitions while dragging */
@@ -30,19 +36,30 @@
 
 /* [STYLE]: Mid-air floating structure layout settings */
 .is-floating {
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
   border-radius: 16px !important;
+}
+.dark.is-floating {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 /* [STYLE]: Edge snapping border overrides to remove overlapping lines */
 .is-snapped.side-right {
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-right: none !important;
+}
+.dark.is-snapped.side-right {
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-right: none !important; /* Fix broken visual lines */
+  border-right: none !important;
 }
 
 .is-snapped.side-left {
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-left: none !important;
+}
+.dark.is-snapped.side-left {
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-left: none !important; /* Fix broken visual lines */
+  border-left: none !important;
 }
 
 /* Dynamic border radii properties matching expansion bounds */
@@ -62,7 +79,6 @@
 /* ========================================================
    PREMIUM HIGH-FIDELITY INVERTED CORNERS ENGINEERING
    ======================================================== */
-
 .is-snapped::before,
 .is-snapped::after {
   content: "";
@@ -70,7 +86,7 @@
   width: 24px;
   height: 24px;
   pointer-events: none;
-  z-index: -1; /* Keep behind active rendering layer */
+  z-index: -1;
 }
 
 /* Snap Right Curvatures */
@@ -78,12 +94,19 @@
   top: -24px;
   right: 0;
   border-bottom-right-radius: 24px;
+  box-shadow: 12px 12px 0 12px #ffffff;
+}
+.dark.is-snapped.side-right::before {
   box-shadow: 12px 12px 0 12px #000000;
 }
+
 .is-snapped.side-right::after {
   bottom: -24px;
   right: 0;
   border-top-right-radius: 24px;
+  box-shadow: 12px -12px 0 12px #ffffff;
+}
+.dark.is-snapped.side-right::after {
   box-shadow: 12px -12px 0 12px #000000;
 }
 
@@ -92,12 +115,19 @@
   top: -24px;
   left: 0;
   border-bottom-left-radius: 24px;
+  box-shadow: -12px 12px 0 12px #ffffff;
+}
+.dark.is-snapped.side-left::before {
   box-shadow: -12px 12px 0 12px #000000;
 }
+
 .is-snapped.side-left::after {
   bottom: -24px;
   left: 0;
   border-top-left-radius: 24px;
+  box-shadow: -12px -12px 0 12px #ffffff;
+}
+.dark.is-snapped.side-left::after {
   box-shadow: -12px -12px 0 12px #000000;
 }
 
