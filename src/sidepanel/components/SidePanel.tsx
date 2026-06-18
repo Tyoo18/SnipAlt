@@ -11,12 +11,11 @@ import {
   FolderHeart,
   Sun,
   Moon,
-  Monitor,
 } from "lucide-react";
 
 export default function SidePanel() {
   // [STATE]: Unified application configuration and tracking hooks
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [resolvedDark, setResolvedDark] = useState(true);
 
   const clips = useLiveQuery(() =>
@@ -25,23 +24,14 @@ export default function SidePanel() {
 
   // [INIT]: Fetch initial user theme preference state directly from storage hooks
   useEffect(() => {
-    const updateResolvedDarkState = (
-      currentTheme: "light" | "dark" | "system",
-    ) => {
-      if (currentTheme === "dark") {
-        setResolvedDark(true);
-      } else if (currentTheme === "light") {
-        setResolvedDark(false);
-      } else {
-        const isSystemDarkTheme = window.matchMedia(
-          "(prefers-color-scheme: dark)",
-        ).matches;
-        setResolvedDark(isSystemDarkTheme);
-      }
+    // [UTIL]: Core routine to resolve dark class mapping
+    const updateResolvedDarkState = (currentTheme: "light" | "dark") => {
+      setResolvedDark(currentTheme === "dark");
     };
 
     chrome.storage.local.get(["snipalt_theme"], (result) => {
-      const persistentTheme = result.snipalt_theme || "system";
+      const persistentTheme =
+        result.snipalt_theme === "light" ? "light" : "dark";
       setTheme(persistentTheme);
       updateResolvedDarkState(persistentTheme);
     });
@@ -49,48 +39,27 @@ export default function SidePanel() {
     // [UTIL]: Listen to storage mutations reactively from options or dock triggers
     const handleGlobalStorageChanges = (changes: any) => {
       if (changes.snipalt_theme) {
-        const targetTheme = changes.snipalt_theme.newValue || "system";
+        const targetTheme =
+          changes.snipalt_theme.newValue === "light" ? "light" : "dark";
         setTheme(targetTheme);
         updateResolvedDarkState(targetTheme);
       }
     };
 
-    // [UTIL]: Listen to browser/OS color scheme toggles fluidly
-    const browserMediaSpec = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleSystemMediaTrigger = (e: MediaQueryListEvent) => {
-      chrome.storage.local.get(["snipalt_theme"], (res) => {
-        if ((res.snipalt_theme || "system") === "system") {
-          setResolvedDark(e.matches);
-        }
-      });
-    };
-
     chrome.storage.onChanged.addListener(handleGlobalStorageChanges);
-    browserMediaSpec.addEventListener("change", handleSystemMediaTrigger);
 
     return () => {
       chrome.storage.onChanged.removeListener(handleGlobalStorageChanges);
-      browserMediaSpec.removeEventListener("change", handleSystemMediaTrigger);
     };
   }, []);
 
-  // [HANDLER]: Cycle internal states sequentially light -> dark -> system
+  // [HANDLER]: Cycle internal states sequentially light <-> dark (2‑way)
   const handleCycleThemeToggle = () => {
-    let progressiveTheme: "light" | "dark" | "system" = "light";
-    if (theme === "light") progressiveTheme = "dark";
-    else if (theme === "dark") progressiveTheme = "system";
-    else if (theme === "system") progressiveTheme = "light";
+    const progressiveTheme = theme === "light" ? "dark" : "light";
 
     setTheme(progressiveTheme);
     chrome.storage.local.set({ snipalt_theme: progressiveTheme });
-
-    // Instantly force compilation update for snappy client feedback
-    if (progressiveTheme === "dark") setResolvedDark(true);
-    else if (progressiveTheme === "light") setResolvedDark(false);
-    else
-      setResolvedDark(
-        window.matchMedia("(prefers-color-scheme: dark)").matches,
-      );
+    setResolvedDark(progressiveTheme === "dark");
   };
 
   // [HANDLER]: Delete clip persistence operation from IndexedDB store
@@ -129,17 +98,15 @@ export default function SidePanel() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* PREMIUM THEME CYCLE TRIGGER BUTTON */}
+            {/* THEME TOGGLE BUTTON */}
             <div className="relative group">
               <button
                 onClick={handleCycleThemeToggle}
                 className="p-1.5 bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded-lg border border-zinc-200 dark:border-white/10 transition-all duration-150 flex items-center justify-center cursor-pointer"
               >
-                {theme === "light" && <Sun size={14} />}
-                {theme === "dark" && <Moon size={14} />}
-                {theme === "system" && <Monitor size={14} />}
+                {theme === "light" ? <Sun size={14} /> : <Moon size={14} />}
               </button>
-              {/* INLINE MICRO-INTERACTION TOOLTIP */}
+              {/* TOOLTIP */}
               <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-zinc-900 text-white text-[10px] px-2 py-1 rounded shadow-md font-medium capitalize border border-white/5 whitespace-nowrap z-50">
                 Theme: {theme}
               </div>
