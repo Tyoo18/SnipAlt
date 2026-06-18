@@ -1,9 +1,16 @@
 {
   "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyPTaFsc8qcXtFECfl+GPqnWrHm2CJ3W/hwaEJxWUTmf0G+W8KQQtwHo2mcozrnSeqXtYqg87PZXgCUTQpQiYO7sax2a16btO6P6DZBTAvwhZRyBAQtB3eR1350uChLuEfVpAiU8V3Uo1u2oCbDaWs8hrx+ZX3U9V6Z9b+UG0U9+CJvli/2Cw+6NrJedJvsX5Bz7ZVg5gkn3ZI7B0VE2MNe720bwkMoxUdnyfxiTLUvf6a8ckRgNQNkbpeG2K6if0M4gSd579c+S6nAL4CH2jDi2YpdzembvKrlF5V/lvbPe0gPolWxL996zb25BG5idIxk6HTIySL9k7TYXUVlaYAQIDAQAB",
   "name": "SnipAlt",
   "version": "1.0.0",
   "description": "The fastest way to save web insights without breaking your flow.",
-  "permissions": ["storage", "sidePanel", "activeTab", "contextMenus"],
+  "permissions": [
+    "storage",
+    "sidePanel",
+    "activeTab",
+    "contextMenus",
+    "identity"
+  ],
   "background": {
     "service_worker": "src/background/index.ts",
     "type": "module"
@@ -32,5 +39,12 @@
     "16": "src/assets/icons16.png",
     "48": "src/assets/icons48.png",
     "128": "src/assets/icons128.png"
+  },
+  "oauth2": {
+    "client_id": "926397458766-lj4h1upkvtebab08avrua0826thbfn2u.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
   }
 }

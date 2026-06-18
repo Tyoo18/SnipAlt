@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../../shared/db";
-import { type ClipData } from "../../shared/types";
+import { type ClipData, type UserProfile } from "../../shared/types";
 import {
   Trash2,
   ExternalLink,
@@ -12,6 +12,7 @@ import {
   Sun,
   Moon,
   Cloud,
+  LogOut,
 } from "lucide-react";
 
 // [UTIL]: Product setup credentials pointing directly to your Gumroad store dashboard
@@ -35,11 +36,15 @@ export default function SidePanel() {
     isError: boolean;
   } | null>(null);
 
+  // [STATE]: User Google profile authentication states
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [authLoading, setAuthLoading] = useState<boolean>(false);
+
   const clips = useLiveQuery(() =>
     db.clips.orderBy("timestamp").reverse().toArray(),
   );
 
-  // [INIT]: Fetch initial user theme preference and premium status from local storage
+  // [INIT]: Fetch initial user theme preference, premium status, and profile from local storage
   useEffect(() => {
     // [UTIL]: Core routine to resolve dark class mapping
     const updateResolvedDarkState = (currentTheme: "light" | "dark") => {
@@ -47,7 +52,7 @@ export default function SidePanel() {
     };
 
     chrome.storage.local.get(
-      ["snipalt_theme", "snipalt_is_premium"],
+      ["snipalt_theme", "snipalt_is_premium", "snipalt_user_profile"],
       (result) => {
         const persistentTheme =
           result.snipalt_theme === "light" ? "light" : "dark";
@@ -56,6 +61,9 @@ export default function SidePanel() {
 
         if (result.snipalt_is_premium) {
           setIsPremium(true);
+        }
+        if (result.snipalt_user_profile) {
+          setUser(result.snipalt_user_profile);
         }
       },
     );
@@ -70,6 +78,9 @@ export default function SidePanel() {
       }
       if (changes.snipalt_is_premium) {
         setIsPremium(!!changes.snipalt_is_premium.newValue);
+      }
+      if (changes.snipalt_user_profile) {
+        setUser(changes.snipalt_user_profile.newValue || null);
       }
     };
 
@@ -137,6 +148,35 @@ export default function SidePanel() {
         }
       },
     );
+  };
+
+  // [HANDLER]: Execute Google OAuth background process via runtime messenger channels
+  const handleGoogleSignIn = () => {
+    setAuthLoading(true);
+    chrome.runtime.sendMessage({ type: "GOOGLE_SIGN_IN" }, (response) => {
+      setAuthLoading(false);
+      if (response && response.success && response.user) {
+        chrome.storage.local.set(
+          { snipalt_user_profile: response.user },
+          () => {
+            setUser(response.user);
+          },
+        );
+      } else {
+        alert(response?.message || "Gagal masuk menggunakan Google.");
+      }
+    });
+  };
+
+  // [HANDLER]: Wipe Google authorization sessions out of memory and state pipelines
+  const handleGoogleSignOut = () => {
+    chrome.runtime.sendMessage({ type: "GOOGLE_SIGN_OUT" }, (response) => {
+      if (response && response.success) {
+        chrome.storage.local.remove("snipalt_user_profile", () => {
+          setUser(null);
+        });
+      }
+    });
   };
 
   // [FORMAT]: Clean format utility for compact timestamp tracking
@@ -265,11 +305,68 @@ export default function SidePanel() {
           )}
         </main>
 
-        {/* PREMIUM PAYWALL BANNER */}
-        {!isPremium && (
+        {/* [STYLE]: Refactored dual-state footer management boundary */}
+        {isPremium ? (
+          // [RENDER]: Ultra-clean premium management dashboard footer area
+          <footer className="p-3 bg-white/80 dark:bg-zinc-900/60 border-t border-zinc-200 dark:border-white/10 backdrop-blur-md transition-colors duration-200">
+            {user ? (
+              <div className="flex items-center justify-between bg-slate-100/50 dark:bg-zinc-950/40 p-2.5 rounded-xl border border-zinc-200 dark:border-white/5">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <img
+                    src={user.picture}
+                    alt={user.name}
+                    className="w-7 h-7 rounded-full border border-zinc-300 dark:border-white/10 bg-zinc-800 shrink-0 object-cover shadow-sm"
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[11px] font-bold text-zinc-800 dark:text-slate-200 truncate">
+                      {user.name}
+                    </span>
+                    <span className="text-[9px] text-zinc-400 dark:text-zinc-500 truncate leading-tight">
+                      {user.email}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[9px] bg-blue-500/10 text-blue-500 dark:text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/10 font-semibold tracking-wide uppercase">
+                    Synced
+                  </span>
+                  <button
+                    onClick={handleGoogleSignOut}
+                    className="p-1.5 text-zinc-400 dark:text-zinc-500 hover:text-rose-500 dark:hover:text-rose-400 bg-transparent border-none cursor-pointer rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-900 transition-all"
+                    title="Sign Out"
+                  >
+                    <LogOut size={12} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-4 p-1">
+                <div className="flex items-center gap-1.5">
+                  <Cloud
+                    size={14}
+                    className="text-blue-500 dark:text-blue-400 animate-pulse"
+                  />
+                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
+                    Backup cloud disconnected
+                  </span>
+                </div>
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={authLoading}
+                  className="bg-zinc-900 hover:bg-zinc-800 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow transition-all duration-150 cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1 border-none"
+                >
+                  {authLoading ? (
+                    <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    "Connect"
+                  )}
+                </button>
+              </div>
+            )}
+          </footer>
+        ) : (
           <footer className="p-3 bg-slate-100/90 dark:bg-zinc-900/80 border-t border-zinc-200 dark:border-white/10 backdrop-blur-md transition-colors duration-200">
             {!showForm ? (
-              // [RENDER]: Original promotional card layout enhanced with multi-state trigger toggles
               <div className="bg-gradient-to-br from-white to-slate-50 dark:from-zinc-900 dark:to-black/40 p-3 rounded-xl border border-zinc-200 dark:border-white/10 flex items-center justify-between gap-2 shadow-sm dark:shadow-inner">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-1.5">
@@ -301,7 +398,6 @@ export default function SidePanel() {
                 </div>
               </div>
             ) : (
-              // [RENDER]: Ultra-clean license validation submission micro-form
               <form
                 onSubmit={handleVerifyLicense}
                 className="bg-gradient-to-br from-white to-slate-50 dark:from-zinc-900 dark:to-black/40 p-3 rounded-xl border border-zinc-200 dark:border-white/10 space-y-2.5 shadow-sm"

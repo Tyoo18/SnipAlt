@@ -17,7 +17,7 @@
 
 /* Switch background style dynamically inside dark sandbox */
 .snipalt-window-container.dark {
-  background-color: #000000 !important;
+  background-color: #0F0F12 !important;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9) !important;
 }
 
@@ -97,7 +97,7 @@
   box-shadow: 12px 12px 0 12px #ffffff;
 }
 .dark.is-snapped.side-right::before {
-  box-shadow: 12px 12px 0 12px #000000;
+  box-shadow: 12px 12px 0 12px #0F0F12;
 }
 
 .is-snapped.side-right::after {
@@ -107,7 +107,7 @@
   box-shadow: 12px -12px 0 12px #ffffff;
 }
 .dark.is-snapped.side-right::after {
-  box-shadow: 12px -12px 0 12px #000000;
+  box-shadow: 12px -12px 0 12px #0F0F12;
 }
 
 /* Snap Left Curvatures */
@@ -118,7 +118,7 @@
   box-shadow: -12px 12px 0 12px #ffffff;
 }
 .dark.is-snapped.side-left::before {
-  box-shadow: -12px 12px 0 12px #000000;
+  box-shadow: -12px 12px 0 12px #0F0F12;
 }
 
 .is-snapped.side-left::after {
@@ -128,7 +128,7 @@
   box-shadow: -12px -12px 0 12px #ffffff;
 }
 .dark.is-snapped.side-left::after {
-  box-shadow: -12px -12px 0 12px #000000;
+  box-shadow: -12px -12px 0 12px #0F0F12;
 }
 
 /* ========================================================
