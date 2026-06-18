@@ -11,30 +11,54 @@ import {
   FolderHeart,
   Sun,
   Moon,
+  Cloud,
 } from "lucide-react";
+
+// [UTIL]: Product setup credentials pointing directly to your Gumroad store dashboard
+const GUMROAD_PRODUCT_URL =
+  "https://aldorise6.gumroad.com/l/trlznx?_gl=1*1o875eo*_ga*MTM3MDEyNzkyOC4xNzc5Mzg2OTA4*_ga_6LJN6D94N6*czE3ODE3NzA2NDgkbzIwJGcxJHQxNzgxNzcwNjU3JGo1MSRsMCRoMA..";
+// [UTIL]: Unique Gumroad product identifier string obtained from the verification error
+const PRODUCT_ID = "lfolmfoFW1tlkatqc3vRXw==";
 
 export default function SidePanel() {
   // [STATE]: Unified application configuration and tracking hooks
   const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [resolvedDark, setResolvedDark] = useState(true);
 
+  // [STATE]: Premium entitlement verification tracking nodes
+  const [isPremium, setIsPremium] = useState<boolean>(false);
+  const [showForm, setShowForm] = useState<boolean>(false);
+  const [licenseKey, setLicenseKey] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [statusMsg, setStatusMsg] = useState<{
+    text: string;
+    isError: boolean;
+  } | null>(null);
+
   const clips = useLiveQuery(() =>
     db.clips.orderBy("timestamp").reverse().toArray(),
   );
 
-  // [INIT]: Fetch initial user theme preference state directly from storage hooks
+  // [INIT]: Fetch initial user theme preference and premium status from local storage
   useEffect(() => {
     // [UTIL]: Core routine to resolve dark class mapping
     const updateResolvedDarkState = (currentTheme: "light" | "dark") => {
       setResolvedDark(currentTheme === "dark");
     };
 
-    chrome.storage.local.get(["snipalt_theme"], (result) => {
-      const persistentTheme =
-        result.snipalt_theme === "light" ? "light" : "dark";
-      setTheme(persistentTheme);
-      updateResolvedDarkState(persistentTheme);
-    });
+    chrome.storage.local.get(
+      ["snipalt_theme", "snipalt_is_premium"],
+      (result) => {
+        const persistentTheme =
+          result.snipalt_theme === "light" ? "light" : "dark";
+        setTheme(persistentTheme);
+        updateResolvedDarkState(persistentTheme);
+
+        if (result.snipalt_is_premium) {
+          setIsPremium(true);
+        }
+      },
+    );
 
     // [UTIL]: Listen to storage mutations reactively from options or dock triggers
     const handleGlobalStorageChanges = (changes: any) => {
@@ -43,6 +67,9 @@ export default function SidePanel() {
           changes.snipalt_theme.newValue === "light" ? "light" : "dark";
         setTheme(targetTheme);
         updateResolvedDarkState(targetTheme);
+      }
+      if (changes.snipalt_is_premium) {
+        setIsPremium(!!changes.snipalt_is_premium.newValue);
       }
     };
 
@@ -69,6 +96,49 @@ export default function SidePanel() {
     }
   };
 
+  // [HANDLER]: Open Gumroad checkout workflow safely on an active external tab
+  const handleBuyClick = () => {
+    chrome.tabs.create({ url: GUMROAD_PRODUCT_URL });
+  };
+
+  // [HANDLER]: Dispatch licence activation network queries to backend runtime workers
+  const handleVerifyLicense = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!licenseKey.trim()) return;
+
+    setIsLoading(true);
+    setStatusMsg(null);
+
+    // [FETCH]: Pipe interaction signatures across background runtime cross-contexts
+    chrome.runtime.sendMessage(
+      {
+        type: "VERIFY_LICENSE",
+        payload: {
+          licenseKey: licenseKey.trim(),
+          productId: PRODUCT_ID,
+        },
+      },
+      (response) => {
+        setIsLoading(false);
+
+        // [VALIDATE]: Mutate persistent cloud parameters upon validating license codes
+        if (response && response.success) {
+          chrome.storage.local.set({ snipalt_is_premium: true }, () => {
+            setIsPremium(true);
+            setShowForm(false);
+          });
+        } else {
+          setStatusMsg({
+            text:
+              response?.message ||
+              "Verifikasi gagal, periksa kembali kode Anda.",
+            isError: true,
+          });
+        }
+      },
+    );
+  };
+
   // [FORMAT]: Clean format utility for compact timestamp tracking
   const formatTime = (ts: number) => {
     return new Date(ts).toLocaleTimeString("id-ID", {
@@ -88,9 +158,24 @@ export default function SidePanel() {
               <FolderHeart size={18} />
             </div>
             <div>
-              <h1 className="text-md font-bold tracking-tight text-zinc-900 dark:text-slate-100">
-                SnipAlt Vault
-              </h1>
+              {/* [STYLE]: Premium-aware heading layout structure with unified brand tokens */}
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-md font-bold tracking-tight text-zinc-900 dark:text-slate-100">
+                  SnipAlt Vault
+                </h1>
+                {isPremium && (
+                  <div className="relative group/cloud flex items-center cursor-help">
+                    <Cloud
+                      size={14}
+                      className="text-blue-500 dark:text-blue-400 drop-shadow-[0_0_4px_rgba(59,130,246,0.35)] transition-all duration-300 hover:scale-110"
+                    />
+                    {/* ICON TOOLTIP */}
+                    <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden group-hover/cloud:block bg-zinc-900 text-white text-[9px] px-1.5 py-0.5 rounded shadow-md border border-white/5 whitespace-nowrap z-50 font-medium tracking-normal normal-case">
+                      Cloud Sync Active
+                    </span>
+                  </div>
+                )}
+              </div>
               <p className="text-xs text-zinc-400 dark:text-zinc-400">
                 Your curated web insights
               </p>
@@ -181,27 +266,93 @@ export default function SidePanel() {
         </main>
 
         {/* PREMIUM PAYWALL BANNER */}
-        <footer className="p-3 bg-slate-100/90 dark:bg-zinc-900/80 border-t border-zinc-200 dark:border-white/10 backdrop-blur-md transition-colors duration-200">
-          <div className="bg-gradient-to-br from-white to-slate-50 dark:from-zinc-900 dark:to-black/40 p-3 rounded-xl border border-zinc-200 dark:border-white/10 flex items-center justify-between gap-2 shadow-sm dark:shadow-inner">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck
-                  size={14}
-                  className="text-brand-500 dark:text-blue-400"
-                />
-                <span className="text-xs font-bold tracking-wide uppercase text-zinc-700 dark:text-zinc-200">
-                  Upgrade to Cloud Sync
-                </span>
+        {!isPremium && (
+          <footer className="p-3 bg-slate-100/90 dark:bg-zinc-900/80 border-t border-zinc-200 dark:border-white/10 backdrop-blur-md transition-colors duration-200">
+            {!showForm ? (
+              // [RENDER]: Original promotional card layout enhanced with multi-state trigger toggles
+              <div className="bg-gradient-to-br from-white to-slate-50 dark:from-zinc-900 dark:to-black/40 p-3 rounded-xl border border-zinc-200 dark:border-white/10 flex items-center justify-between gap-2 shadow-sm dark:shadow-inner">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck
+                      size={14}
+                      className="text-brand-500 dark:text-blue-400"
+                    />
+                    <span className="text-xs font-bold tracking-wide uppercase text-zinc-700 dark:text-zinc-200">
+                      Upgrade to Cloud Sync
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-400 leading-normal">
+                    Access your captured snippets seamlessly across all devices.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1 shrink-0">
+                  <button
+                    onClick={handleBuyClick}
+                    className="bg-brand-500 hover:bg-brand-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-[11px] font-semibold px-3 py-1.5 rounded-lg shadow transition-all duration-150 border-none cursor-pointer text-center"
+                  >
+                    Unlock
+                  </button>
+                  <button
+                    onClick={() => setShowForm(true)}
+                    className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors text-center bg-transparent border-none cursor-pointer underline decoration-dotted"
+                  >
+                    Enter Key
+                  </button>
+                </div>
               </div>
-              <p className="text-[10px] text-zinc-400 dark:text-zinc-400 leading-normal">
-                Access your captured snippets seamlessly across all devices.
-              </p>
-            </div>
-            <button className="bg-brand-500 hover:bg-brand-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow transition-all duration-150 shrink-0 border-none cursor-pointer">
-              Unlock
-            </button>
-          </div>
-        </footer>
+            ) : (
+              // [RENDER]: Ultra-clean license validation submission micro-form
+              <form
+                onSubmit={handleVerifyLicense}
+                className="bg-gradient-to-br from-white to-slate-50 dark:from-zinc-900 dark:to-black/40 p-3 rounded-xl border border-zinc-200 dark:border-white/10 space-y-2.5 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold tracking-wide uppercase text-zinc-500 dark:text-zinc-400">
+                    Gumroad License Key
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForm(false);
+                      setStatusMsg(null);
+                    }}
+                    className="text-[10px] text-zinc-400 dark:text-zinc-500 hover:text-rose-500 border-none bg-transparent cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={licenseKey}
+                    onChange={(e) => setLicenseKey(e.target.value)}
+                    disabled={isLoading}
+                    placeholder="Paste license key..."
+                    className="flex-1 bg-slate-50 dark:bg-zinc-950/50 border border-zinc-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:border-blue-500/50 dark:focus:border-blue-500/50 transition-all font-mono"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoading || !licenseKey.trim()}
+                    className="bg-brand-500 hover:bg-brand-600 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow disabled:opacity-40 transition-all duration-150 shrink-0 border-none cursor-pointer flex items-center justify-center min-w-[55px]"
+                  >
+                    {isLoading ? (
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      "Verify"
+                    )}
+                  </button>
+                </div>
+                {statusMsg && (
+                  <p
+                    className={`text-[10px] font-medium leading-tight ${statusMsg.isError ? "text-rose-500 dark:text-rose-400" : "text-emerald-500 dark:text-emerald-400"}`}
+                  >
+                    {statusMsg.text}
+                  </p>
+                )}
+              </form>
+            )}
+          </footer>
+        )}
       </div>
     </div>
   );

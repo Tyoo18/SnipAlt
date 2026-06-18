@@ -55,4 +55,40 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     return true; // Keep connection active for async channel resolution
   }
+
+  // [HANDLER]: Handle cloud sync premium activation securely via Gumroad API bypass
+  else if (message.type === "VERIFY_LICENSE" && message.payload) {
+    // [FETCH]: Execute background network request using accurate product_id and limit flags
+    fetch("https://api.gumroad.com/v2/licenses/verify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        product_id: message.payload.productId,
+        license_key: message.payload.licenseKey,
+        increment_uses_count: true,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        // [VALIDATE]: Ensure license is authentic and not abused over active limits
+        if (data.success && !data.uses_count_over_limit) {
+          sendResponse({ success: true, data });
+        } else {
+          sendResponse({
+            success: false,
+            message: data.message || "Lisensi tidak valid atau limit habis.",
+          });
+        }
+      })
+      .catch(() => {
+        // [UTIL]: Graceful fallback catch for network dropouts or timeout events
+        sendResponse({
+          success: false,
+          message: "Gagal terhubung ke server Gumroad.",
+        });
+      });
+    return true; // Keeps the async chrome gateway communication open
+  }
 });
