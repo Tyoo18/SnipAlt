@@ -13,7 +13,10 @@ import {
   Moon,
   Cloud,
   LogOut,
+  RefreshCw, // Added for manual sync
 } from "lucide-react";
+// 1. Add the supabase import at the top of your imports
+import { supabase } from "../../shared/supabaseClient"; // Ensure path is correct
 
 // [UTIL]: Product setup credentials pointing directly to your Gumroad store dashboard
 const GUMROAD_PRODUCT_URL =
@@ -40,6 +43,9 @@ export default function SidePanel() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(false);
 
+  // [STATE]: Manual sync loading indicator
+  const [isManualSyncing, setIsManualSyncing] = useState(false);
+
   const clips = useLiveQuery(() =>
     db.clips.orderBy("timestamp").reverse().toArray(),
   );
@@ -64,6 +70,9 @@ export default function SidePanel() {
         }
         if (result.snipalt_user_profile) {
           setUser(result.snipalt_user_profile);
+
+          // ✨ NEW: Silently catch up and sync from cloud right when sidepanel opens
+          chrome.runtime.sendMessage({ type: "SYNC_FROM_CLOUD" });
         }
       },
     );
@@ -91,6 +100,50 @@ export default function SidePanel() {
     };
   }, []);
 
+  // 3. NEW FEATURE: Realtime auto-update synchronization effect engine
+  useEffect(() => {
+    // Only subscribe if the user is verified premium and authenticated
+    if (!isPremium || !user?.email) return;
+
+    // // [INIT]: Establish a premium real-time listening pipeline for database changes
+    const cloudSyncChannel = supabase
+      .channel("live-clips-sync")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "clips",
+          filter: `user_email=eq.${user.email}`, // Safely isolate this user's data stream
+        },
+        async (payload) => {
+          const remoteClip = payload.new;
+
+          // Deduplicate: check if this clip already exists locally in Dexie
+          const isDuplicate = await db.clips
+            .where("timestamp")
+            .equals(Number(remoteClip.timestamp))
+            .first();
+
+          if (!isDuplicate) {
+            // [PROCESS]: Silently append the incoming remote row into offline Dexie storage
+            await db.clips.add({
+              textContent: remoteClip.text_content,
+              sourceUrl: remoteClip.source_url,
+              pageTitle: remoteClip.page_title,
+              timestamp: Number(remoteClip.timestamp),
+            });
+          }
+        },
+      )
+      .subscribe();
+
+    // Clean up subscription channel when SidePanel closes
+    return () => {
+      supabase.removeChannel(cloudSyncChannel);
+    };
+  }, [isPremium, user?.email]);
+
   // [HANDLER]: Cycle internal states sequentially light <-> dark (2‑way)
   const handleCycleThemeToggle = () => {
     const progressiveTheme = theme === "light" ? "dark" : "light";
@@ -98,6 +151,17 @@ export default function SidePanel() {
     setTheme(progressiveTheme);
     chrome.storage.local.set({ snipalt_theme: progressiveTheme });
     setResolvedDark(progressiveTheme === "dark");
+  };
+
+  // [HANDLER]: Manual cloud sync trigger
+  const handleForceSync = () => {
+    if (!isPremium || !user) return;
+    setIsManualSyncing(true);
+    chrome.runtime.sendMessage({ type: "SYNC_FROM_CLOUD" }, () => {
+      setTimeout(() => {
+        setIsManualSyncing(false);
+      }, 600);
+    });
   };
 
   // [HANDLER]: Delete clip persistence operation from IndexedDB store
@@ -236,6 +300,25 @@ export default function SidePanel() {
                 Theme: {theme}
               </div>
             </div>
+
+            {/* MANUAL SYNC BUTTON - only for premium authenticated users */}
+            {isPremium && user && (
+              <button
+                onClick={handleForceSync}
+                disabled={isManualSyncing}
+                className="p-1.5 bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-lg border border-zinc-200 dark:border-white/10 transition-all duration-150 flex items-center justify-center cursor-pointer disabled:opacity-40"
+                title="Sync with Cloud"
+              >
+                <RefreshCw
+                  size={14}
+                  className={
+                    isManualSyncing
+                      ? "animate-spin text-blue-500 dark:text-blue-400"
+                      : ""
+                  }
+                />
+              </button>
+            )}
 
             <span className="text-xs font-semibold px-2 py-0.5 bg-slate-200/70 dark:bg-zinc-900 border border-zinc-300 dark:border-white/5 text-zinc-600 dark:text-zinc-300 rounded-full transition-colors duration-200">
               {clips?.length || 0} Clips
