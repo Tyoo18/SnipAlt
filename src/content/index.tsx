@@ -127,7 +127,7 @@ const ContentApp = () => {
     }
 
     setIsCollapsed(targetCollapseState);
-    updateWindowTransformStyles();
+    // updateWindowTransformStyles();
 
     if (!targetCollapseState) {
       scheduleAutoCollapse(6000);
@@ -373,9 +373,7 @@ const ContentApp = () => {
               >
                 <SidebarOpen size={13} />
               </button>
-              <div className="snipalt-tooltip-card">
-                Open Permanent Vault Sidepanel
-              </div>
+              <div className="snipalt-tooltip-card">Open Sidepanel</div>
             </div>
           </div>
 
