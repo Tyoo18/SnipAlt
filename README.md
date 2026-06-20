@@ -15,23 +15,13 @@ We are currently bootstrapping SnipAlt! To reward our earliest adopters, the fir
 
 ---
 
-## 🛠️ How to Install (Beta Release)
+## ⚙️ How to Install
 
-Since SnipAlt is currently in open beta via GitHub, you can install it manually in less than 60 seconds:
-
-### Step 1: Download the Extension Package
-1. Look at the **Releases** section on the right side of this GitHub page.
-2. Download the latest `SnipAlt-v1.0.0.zip` file.
-3. Extract (unzip) the file somewhere safe on your computer (e.g., your Documents folder).
-
-### Step 2: Enable Developer Mode in Chrome
-1. Open Google Chrome and type `chrome://extensions/` into the URL bar.
-2. In the top-right corner of the Extensions page, toggle the **Developer mode** switch to **ON**.
-
-### Step 3: Load the Extension
-1. Click the **Load unpacked** button in the top-left corner.
-2. Select the extracted folder that contains the `manifest.json` file.
-3. **Boom! You're done.** Pin SnipAlt to your toolbar for easy access.
+1. Download and unzip **`SnipAlt-v1.0.0.zip`**.
+2. Go to `chrome://extensions/` in Chrome.
+3. Turn on **Developer mode** (top-right).
+4. Click **Load unpacked** and select the extracted folder.
+5. Pin SnipAlt to your toolbar — done!
 
 ---
 
